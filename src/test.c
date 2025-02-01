@@ -51,7 +51,7 @@ void test_pcg()
     //************************************************************************
     uint8_t *fft_a = calloc(poly_size, sizeof(uint8_t));
     uint32_t *fft_a2 = calloc(poly_size, sizeof(uint32_t));
-    sample_a_and_a2(fft_a, fft_a2, poly_size, c);
+    sample_a_and_a2(fft_a, fft_a2, poly_size, c); // Each is of poly_size
 
     //************************************************************************
     // Here, we figure out a good block size for the error vectors such that
@@ -184,26 +184,22 @@ void test_pcg()
     //************************************************************************
     uint8_t *err_poly_cross_coeffs = calloc(c * c * t * t, sizeof(uint8_t));
     size_t *err_poly_cross_positions = malloc(sizeof(size_t) * c * c * t * t);
+    // size_t *err_poly_cross_positions = calloc(c * c * t * t, sizeof(size_t));
     uint8_t *err_polys_cross = calloc(c * c * poly_size, sizeof(uint8_t));
 
     uint8_t *trit_decomp_A = malloc(sizeof(uint8_t) * n);
     uint8_t *trit_decomp_B = malloc(sizeof(uint8_t) * n);
     uint8_t *trit_decomp = malloc(sizeof(uint8_t) * n);
 
-    for (size_t iA = 0; iA < c; iA++)
-    {
-        for (size_t iB = 0; iB < c; iB++)
-        {
+    for (size_t iA = 0; iA < c; iA++) {
+        for (size_t iB = 0; iB < c; iB++) {
             size_t poly_index = iA * c * t * t + iB * t * t;
             uint8_t *next_idx = calloc(t, sizeof(uint8_t));
 
-            for (size_t jA = 0; jA < t; jA++)
-            {
-                for (size_t jB = 0; jB < t; jB++)
-                {
-                    // jA-th coefficient value of the iA-th polynomial
-                    uint8_t vA = err_poly_coeffs_A[iA * t + jA];
-
+            for (size_t jA = 0; jA < t; jA++) {
+                // jA-th coefficient value of the iA-th polynomial
+                uint8_t vA = err_poly_coeffs_A[iA * t + jA];
+                for (size_t jB = 0; jB < t; jB++) {
                     // jB-th coefficient value of the iB-th polynomial
                     uint8_t vB = err_poly_coeffs_B[iB * t + jB];
 
@@ -214,14 +210,12 @@ void test_pcg()
                     size_t posA = jA * block_size + err_poly_positions_A[iA * t + jA];
                     size_t posB = jB * block_size + err_poly_positions_B[iB * t + jB];
 
-                    if (err_polys_A[iA * poly_size + posA] == 0)
-                    {
+                    if (err_polys_A[iA * poly_size + posA] == 0) {
                         printf("FAIL: Incorrect position recovered\n");
                         exit(0);
                     }
 
-                    if (err_polys_B[iB * poly_size + posB] == 0)
-                    {
+                    if (err_polys_B[iB * poly_size + posB] == 0) {
                         printf("FAIL: Incorrect position recovered\n");
                         exit(0);
                     }
@@ -234,8 +228,7 @@ void test_pcg()
 
                     // Sum ternary decomposition coordinate-wise to
                     // get the new position (in ternary).
-                    for (size_t k = 0; k < n; k++)
-                    {
+                    for (size_t k = 0; k < n; k++) {
                         // printf("[DEBUG]: trits_A[%zu]=%i, trits_B[%zu]=%i\n",
                         //    k, trit_decomp_A[k], k, trit_decomp_B[k]);
                         trit_decomp[k] = (trit_decomp_A[k] + trit_decomp_B[k]) % 3;
@@ -257,15 +250,12 @@ void test_pcg()
                 }
             }
 
-            for (size_t k = 0; k < t; k++)
-            {
-                if (next_idx[k] > t)
-                {
+            for (size_t k = 0; k < t; k++) {
+                if (next_idx[k] > t) {
                     printf("FAIL: next_idx > t at the end: %hhu\n", next_idx[k]);
                     exit(0);
                 }
             }
-
             free(next_idx);
         }
     }
@@ -280,7 +270,6 @@ void test_pcg()
     //************************************************************************
     // Step 4: Sample the DPF keys for the cross product (eA x eB)
     //************************************************************************
-
     struct DPFKey **dpf_keys_A = malloc(c * c * t * t * sizeof(void *));
     struct DPFKey **dpf_keys_B = malloc(c * c * t * t * sizeof(void *));
 
@@ -289,14 +278,10 @@ void test_pcg()
     PRFKeyGen(prf_keys);
 
     // Sample DPF keys for each of the t errors in the t blocks
-    for (size_t i = 0; i < c; i++)
-    {
-        for (size_t j = 0; j < c; j++)
-        {
-            for (size_t k = 0; k < t; k++)
-            {
-                for (size_t l = 0; l < t; l++)
-                {
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < c; j++) {
+            for (size_t k = 0; k < t; k++) {
+                for (size_t l = 0; l < t; l++) {
                     size_t index = i * c * t * t + j * t * t + k * t + l;
 
                     // Parse the index into the right format
@@ -366,21 +351,19 @@ void test_pcg()
     uint32_t *res_poly_mat_A = malloc(sizeof(uint32_t) * poly_size);
     uint32_t *res_poly_mat_B = malloc(sizeof(uint32_t) * poly_size);
 
-    for (size_t i = 0; i < c; i++)
-    {
-        for (size_t j = 0; j < c; j++)
-        {
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < c; j++) {
             const size_t poly_index = i * c + j;
+            // each entry is of length packed_poly_size
             uint128_t *packed_polyA = &packed_polys_A[poly_index * packed_poly_size];
             uint128_t *packed_polyB = &packed_polys_B[poly_index * packed_poly_size];
 
-            for (size_t k = 0; k < t; k++)
-            {
+            for (size_t k = 0; k < t; k++) {
+                // each entry is of length packed_block_size
                 uint128_t *poly_blockA = &packed_polyA[k * packed_block_size];
                 uint128_t *poly_blockB = &packed_polyB[k * packed_block_size];
 
-                for (size_t l = 0; l < t; l++)
-                {
+                for (size_t l = 0; l < t; l++) {
                     size_t index = i * c * t * t + j * t * t + k * t + l;
                     struct DPFKey *dpf_keyA = dpf_keys_A[index];
                     struct DPFKey *dpf_keyB = dpf_keys_B[index];
@@ -393,8 +376,7 @@ void test_pcg()
                     // block of uint128_t since 64 does not divide block_size.
                     // We deal with this slack later when packing the outputs
                     // into the parallel FFT matrix.
-                    for (size_t w = 0; w < packed_block_size; w++)
-                    {
+                    for (size_t w = 0; w < packed_block_size; w++) {
                         poly_blockA[w] ^= shares_A[w];
                         poly_blockB[w] ^= shares_B[w];
                     }
@@ -405,10 +387,8 @@ void test_pcg()
 
     // Here, we test to make sure all polynomials have at most t^2 errors
     // and fail the test otherwise.
-    for (size_t i = 0; i < c; i++)
-    {
-        for (size_t j = 0; j < c; j++)
-        {
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < c; j++) {
             size_t err_count = 0;
             size_t poly_index = i * c + j;
             uint128_t *poly_A = &packed_polys_A[poly_index * packed_poly_size];
@@ -426,13 +406,10 @@ void test_pcg()
 
             // printf("[DEBUG]: Number of non-zero coefficients in poly (%zu,%zu) is %zu\n", i, j, err_count);
 
-            if (err_count > t * t)
-            {
+            if (err_count > t * t) {
                 printf("FAIL: Number of non-zero coefficients is %zu > t*t\n", err_count);
                 exit(0);
-            }
-            else if (err_count == 0)
-            {
+            } else if (err_count == 0) {
                 printf("FAIL: Number of non-zero coefficients in poly (%zu,%zu) is %zu\n", i, j, err_count);
                 exit(0);
             }
@@ -454,10 +431,8 @@ void test_pcg()
     uint128_t packedA_jk, packedA_kj, packedA_jj, packedB_jk, packedB_kj, packedB_jj;
     uint32_t coeffA_jk, coeffA_kj, coeffA_jj, coeffB_jk, coeffB_kj, coeffB_jj;
 
-    for (size_t j = 0; j < c; j++)
-    {
-        for (size_t k = 0; k < c; k++)
-        {
+    for (size_t j = 0; j < c; j++) {
+        for (size_t k = 0; k < c; k++) {
             uint8_t *test_poly_A = calloc(poly_size, sizeof(uint8_t));
             uint8_t *test_poly_B = calloc(poly_size, sizeof(uint8_t));
 
@@ -625,18 +600,15 @@ void test_pcg()
 }
 
 // samples the a polynomials and axa polynomials
-void sample_a_and_a2(uint8_t *fft_a, uint32_t *fft_a2, size_t poly_size, size_t c)
-{
+void sample_a_and_a2(uint8_t *fft_a, uint32_t *fft_a2, size_t poly_size, size_t c) {
     RAND_bytes((uint8_t *)fft_a, sizeof(uint8_t) * poly_size);
 
     // make a_0 the identity polynomial (in FFT space) i.e., all 1s
-    for (size_t i = 0; i < poly_size; i++)
-    {
+    for (size_t i = 0; i < poly_size; i++) {
         fft_a[i] = fft_a[i] >> 2;
         fft_a[i] = fft_a[i] << 2;
         fft_a[i] |= 1;
     }
-
     // FOR DEBUGGING: set fft_a to the identity
     // for (size_t i = 0; i < poly_size; i++)
     // {
@@ -644,12 +616,9 @@ void sample_a_and_a2(uint8_t *fft_a, uint32_t *fft_a2, size_t poly_size, size_t 
     // }
 
     uint32_t prod;
-    for (size_t j = 0; j < c; j++)
-    {
-        for (size_t k = 0; k < c; k++)
-        {
-            for (size_t i = 0; i < poly_size; i++)
-            {
+    for (size_t j = 0; j < c; j++) {
+        for (size_t k = 0; k < c; k++) {
+            for (size_t i = 0; i < poly_size; i++) {
                 prod = mult_f4((fft_a[i] >> (2 * j)) & 0b11, (fft_a[i] >> (2 * k)) & 0b11);
                 size_t slot = j * c + k;
                 fft_a2[i] |= prod << (2 * slot);

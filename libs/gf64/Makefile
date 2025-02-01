@@ -1,7 +1,6 @@
-TARGET = ./bin/fft
+TARGET = ./bin/gf64
 CC = gcc
-CFLAGS += -std=c99
-CFLAGS += -O3 -I./include -I/usr/include/openssl
+CFLAGS += -std=c99 -O3 -I./include -I/usr/include/openssl/
 LDFLAGS = -march=native -lcrypto -lssl -lm -maes -ffast-math
 
 SRC = $(wildcard ./src/*.c)

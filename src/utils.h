@@ -1,8 +1,15 @@
 #ifndef _UTILS
 #define _UTILS
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <math.h>
+#include <openssl/rand.h>
+
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
+
 
 static void printBytes(void *p, int num)
 {
@@ -126,5 +133,29 @@ static inline size_t ipow(size_t base, size_t exp)
 
     return result;
 }
+
+
+// Multiplications of 16 GF(4) elements.
+// 16 elements are paced into an element of uint32_t.
+static inline uint32_t multiply_32(const uint32_t a, const uint32_t b) {
+
+    const uint32_t pattern = 0xaaaaaaaa;
+    uint32_t mask_h = pattern;     // 0b101010101010101001010
+    uint32_t mask_l = mask_h >> 1; // 0b010101010101010100101
+
+    uint32_t a_h, a_l, b_h, b_l;
+    // multiplication over F4
+    a_h = (a & mask_h);
+    a_l = (a & mask_l);
+    b_h = (b & mask_h);
+    b_l = (b & mask_l);
+
+    uint32_t tmp = (a_h & b_h);
+    uint32_t rlt = tmp ^ (a_h & (b_l << 1));
+    rlt ^= ((a_l << 1) & b_h);
+    rlt |= a_l & b_l ^ (tmp >> 1);
+    return rlt;
+}
+
 
 #endif

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "fft.h"
+#include "utils.h"
+#include "gf128.h"
 
 void fft_recursive_uint64(
     uint64_t *coeffs,
@@ -76,6 +78,52 @@ void fft_recursive_uint64(
         coeffsL[j] = tL;
         coeffsM[j] = tM;
     }
+}
+
+void fft_iterative_uint32_no_data(
+    uint32_t *a,
+    uint32_t *rlt,
+    const size_t num_vars,
+    const size_t num_coeffs) {
+
+    uint32_t *pre = a;
+    uint32_t *cur = rlt;
+
+    static uint32_t zeta_32 = 0xAAAAAAAA;
+
+    for (size_t i = 0; i < num_vars; ++i) {
+        size_t blk_num = ipow(3, num_vars-(i+1));
+        size_t pow_3_i = ipow(3, i);
+        for (size_t blk_id = 0; blk_id < blk_num; blk_id++) {
+            for (size_t j=blk_id*3*pow_3_i; j < blk_id*3*pow_3_i+pow_3_i; ++j) {
+                uint32_t f0 = pre[j];
+                uint32_t f1 = pre[j+pow_3_i];
+                uint32_t f2 = pre[j+2*pow_3_i];
+                uint32_t tmp_mult = multiply_32(f1^f2, zeta_32);
+                cur[j] = f0^f1^f2;
+                cur[j+pow_3_i] = f0^f2^tmp_mult;
+                cur[j+2*pow_3_i] = f0^f1^tmp_mult;
+            }
+        }
+        uint32_t *tmp = pre;
+        pre = cur;
+        cur = tmp;
+    }
+    if (num_vars%2==0) {
+        memcpy(rlt, a, sizeof(uint32_t)*num_coeffs);
+    }
+}
+
+void fft_iterative_uint32(
+    const uint32_t *a,
+    uint32_t *cache,
+    uint32_t *rlt,
+    const size_t num_vars,
+    const size_t num_coeffs
+    ) {
+
+    memcpy(cache, a, sizeof(uint32_t)*num_coeffs);
+    fft_iterative_uint32_no_data(cache, rlt, num_vars, num_coeffs);
 }
 
 void fft_recursive_uint32(

@@ -1,16 +1,17 @@
-# FOLEAGE PCG
+# Trace-OLE PCG
 
-A prototype implementation of the $\mathbb{F}_4$ OLEAGE Pseudorandom Correlation Generator (PCG) in C.
-See the [paper](https://eprint.iacr.org/2024/429.pdf) for details.
+A prototype implementation of the binary OLE Pseudorandom Correlation Generator (PCG) in C.
+The paper will come soon on eprint.
+It is a secondary development based on the implementation of [$\mathbb{F}_4$ OLEAGE](https://github.com/sachaservan/FOLEAGE-PCG/).
 
 ## Organization
+The [libs/gf64](libs/gf64) and [libs/gf128](libs/gf128) folders contains the implementations of operations over $\mathbb{F}_{2^{64}}$ and $\mathbb{F}_{2^{128}}$, respectively.
 
-The [libs/](libs/) folder contains the implementation of the (parallel) FFT and [ternary DPF](https://github.com/sachaservan/tri-dpf) (a submodule) which are both used extensively in the PCG construction.
-
-The [src/](src/) folder contains the code for PCG implementation.
-
-- [src/test.c] closely follows Figure 1 from the [paper](https://eprint.iacr.org/2024/429.pdf) and uses parameters `c=4, t=27` which simplifies the implementation by having the number of blocks `t` be a power of 3.
-- [src/bench.c] implements two benchmarks and can be used to reproduce Table 6 in the paper.
+The [src/](src/) folder contains the code for benchmark tests.
+- [src/modular_bench.c](src/modular_bench.c) is a modular implemetation of [src/bench.c](src/bench.c) with a minor optimization.
+- [src/trace_bench.c](src/trace_bench.c) implements benchmarks for the semi-honest multiplication triples over $\mathbb{F}_2$ based on the trace functions.
+- [src/mal_gf64_trace_bench.c](src/mal_gf64_trace_bench.c) implements benchmarks for the authenticated multiplication triples over $\mathbb{F}_{2^{64}}/\mathbb{F}_2$ based on the trace functions.
+- [src/mal_gf128_trace_bench.c](src/mal_gf128_trace_bench.c) implements benchmarks for the authenticated multiplication triples over $\mathbb{F}_{2^{128}}/\mathbb{F}_2$ based on the trace functions.
 
 ## Dependencies
 
@@ -30,85 +31,34 @@ These dependencies are required by the [ternary DPF](https://github.com/sachaser
 | `sudo apt install libssl-dev`          | `sudo yum install openssl-devel`            |
 | `sudo apt install clang`               | `sudo yum install clang`                    |
 
-On MacOS, use [homebrew](https://brew.sh/) to install dependencies.
-`cmake` and `clang` can be installed via `xcode-select --install`.
-OpenSSL can be installed via `brew install openssl` or manually.
-
-## Running tests and benchmarks
-
-Test:
-
-```
-git submodule update --init --recursive
-make
-./bin/pcg --test
-```
+## Running benchmarks
 
 Benchmarks:
 
 ```
 git submodule update --init --recursive
 make
-./bin/pcg --bench
+./bin/pcg --modular_bench
+./bin/pcg --trace_bench
+./bin/pcg --mal_64_trace_bench
+./bin/pcg --mal_128_trace_bench
 ```
 
-DPF benchmarks:
-See the [DPF repository](https://github.com/sachaservan/tri-dpf).
-
-SPFSS benchmarks:
-Since the SPFSS benchmarks are specific to FOLEAGE, we provide a special test file `spfss_test.c` which can be used to benchmark the DPF implementation. To do so, run:
-
-```
-cd libs
-mv tri-dpf/src/test.c tri-dpf/src/test.old
-cp spfss_test.c tri-dpf/src/test.c
-cd tri-dpf
-make && ./bin/test
-```
-
-FFT benchmarks
-
-```
-cd libs/fft
-make && ./bin/fft
-```
-
-## Parameter Selection
+<!-- ## Parameter Selection
 
 The parameters `c` and `t` can be computed using the [SageMath parameter selection script](https://github.com/mbombar/estimator_folding) (also available as a submodule in `scripts/parameters_selection`).
 We provide reasonable choices of `c` and `t` in Table 2 of [the paper](https://eprint.iacr.org/2024/429.pdf).
-In particular, our benchmarks use `(c=4, t=27)` as a conservative parameter choice and `(c=3,t=27)` as an aggressive parameter choice, when targeting at least $\lambda=128$ bits of security.
+In particular, our benchmarks use `(c=4, t=27)` as a conservative parameter choice and `(c=3,t=27)` as an aggressive parameter choice, when targeting at least $\lambda=128$ bits of security. -->
 
 ## Future development
 
 The current prototype implementation can be extended in several ways.
 TODOs are left in-line, however, the broad strokes include:
 
-- [ ] Unit tests for the FFT (currently only checked by hand on a small instance).
-- [ ] Modularize the PCG construction and tests (currently the test is one monolithic block).
-- [ ] More efficient SIMD-based implementation of the FFT packing (a matrix transpose) which currently is implemented using the naive approach and results in the computational performance bottleneck.
-
-## Citation
-
-```
-@inproceedings{foleage,
-   author       = {Maxime Bombar and
-                  Dung Bui and
-                  Geoffroy Couteau and
-                  Alain Couvreur and
-                  Clément Ducros and
-                  Sacha Servan-Schreiber},
-  title        = {{FOLEAGE}: $\mathbb{F}_{\scriptstyle 4}${OLE}-Based Multi-Party
-                  Computation for Boolean Circuits},
-  editor       = {Kai-Min Chung and Yu Sasaki},
-  pages        =  "69--101",
-  publisher    = {Springer, Singapore},
-  booktitle    = {ASIACRYPT 2024, Part VI, LNCS 15489},
-  year         = 2024,
-}
-```
+- [ ] Change iterative FFT to recursive as the recursive FFT is more efficient.
+- [ ] Merge the codes of [src/mal_gf64_trace_bench.c](src/mal_gf64_trace_bench.c) and [src/mal_gf128_trace_bench.c](src/mal_gf128_trace_bench.c) as the code structures are very similar.
 
 ## ⚠️ Important Warning
 
-<b>This implementation is intended for _research purposes only_. The code has NOT been vetted by security experts.
+<b>This implementation is intended for _research purposes only_. The code has NOT been reviewed by security experts.
 As such, no portion of the code should be used in any real-world or production setting!</b>

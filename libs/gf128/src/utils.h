@@ -25,9 +25,18 @@ static inline size_t ipow(size_t base, size_t exp)
     return result;
 }
 
+// Multiplies two elements of F4 (optionally: 4 elements packed into uint8_t)
+// and returns the result.
+static uint8_t mult_f4(uint8_t a, uint8_t b) {
+    uint8_t tmp = ((a & 0b10) & (b & 0b10));
+    uint8_t res = tmp ^ ((a & 0b10) & ((b & 0b01) << 1) ^ (((a & 0b01) << 1) & (b & 0b10)));
+    res |= ((a & 0b01) & (b & 0b01)) ^ (tmp >> 1);
+    return res;
+}
+
 // Multiplications of 16 GF(4) elements.
 // 16 elements are paced into an element of uint32_t.
-static inline uint32_t multiply_32(const uint32_t a, const uint32_t b) {
+static uint32_t multiply_32(const uint32_t a, const uint32_t b) {
 
     const uint32_t pattern = 0xaaaaaaaa;
     uint32_t mask_h = pattern;     // 0b101010101010101001010
