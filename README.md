@@ -55,7 +55,7 @@ In particular, our benchmarks use `(c=4, t=27)` as a conservative parameter choi
 The current prototype implementation can be extended in several ways.
 TODOs are left in-line, however, the broad strokes include:
 
-- [ ] Change iterative FFT to recursive as the recursive FFT is more efficient.
+- [ ] ~~Change iterative FFT to recursive as the recursive FFT is more efficient.~~ Our tests show that recursive FFT outperforms iterative FFT for large datasets, likely due to the latter requiring at least one additional data copy.
 - [ ] Merge the codes of [src/mal_gf64_trace_bench.c](src/mal_gf64_trace_bench.c) and [src/mal_gf128_trace_bench.c](src/mal_gf128_trace_bench.c) as the code structures are very similar.
 
 ## ⚠️ Important Warning
