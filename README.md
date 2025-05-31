@@ -1,7 +1,6 @@
 # Trace-OLE PCG
 
-A prototype implementation of the binary OLE Pseudorandom Correlation Generator (PCG) in C.
-The paper will come soon on eprint.
+A prototype implementation of the binary OLE Pseudorandom Correlation Generator (PCG) in C following the [paper](https://eprint.iacr.org/2025/169).
 It is a secondary development based on the implementation of [$\mathbb{F}_4$ OLEAGE](https://github.com/sachaservan/FOLEAGE-PCG/).
 
 ## Organization
@@ -55,10 +54,13 @@ In particular, our benchmarks use `(c=4, t=27)` as a conservative parameter choi
 The current prototype implementation can be extended in several ways.
 TODOs are left in-line, however, the broad strokes include:
 
+- [ ] Add the implementation for OLE over $\mathbb{F}_2$ for larger $c$ or larger fields instead of $\mathbb{F}_4$.
 - [ ] ~~Change iterative FFT to recursive as the recursive FFT is more efficient.~~ Our tests show that recursive FFT outperforms iterative FFT for large datasets, likely due to the latter requiring at least one additional data copy.
 - [ ] Merge the codes of [src/mal_gf64_trace_bench.c](src/mal_gf64_trace_bench.c) and [src/mal_gf128_trace_bench.c](src/mal_gf128_trace_bench.c) as the code structures are very similar.
 
 ## ⚠️ Important Warning
+
+Very recently, a [paper](https://eprint.iacr.org/2025/892) showed that the QA-SD problem with parameters $(c=3, t=27, q=4, n=16)$ is insecure. To make the attack infeasible, the paper proposed to use parameter satisfying $c\ge 1+(n-1)/(q-1)$. Here are some example parameters $(c=9,t=9,q=4,n<=25)$, $(c=3, t=49, q=8, n<=15)$ or $(c=6, t=15, q=16, n<=76)$.
 
 <b>This implementation is intended for _research purposes only_. The code has NOT been reviewed by security experts.
 As such, no portion of the code should be used in any real-world or production setting!</b>
