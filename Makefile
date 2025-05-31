@@ -1,6 +1,6 @@
 TARGET = ./bin/pcg
 CC = gcc 
-CFLAGS += -std=c99 -O3 -I./include -I./libs/fft/include -I./libs/gf64/include -I./libs/gf128/include -I./libs/tri-dpf/include -I/usr/include/openssl/
+CFLAGS += -std=c99 -O3 -I./src -I./include -I./libs/fft/include -I./libs/gf64/include -I./libs/gf128/include -I./libs/tri-dpf/include -I/usr/include/openssl/
 LDFLAGS = -march=native -lcrypto -lssl -lm -maes -ffast-math
 
 # Define source files and filter out library files 

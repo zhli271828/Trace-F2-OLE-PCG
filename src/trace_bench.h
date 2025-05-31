@@ -72,7 +72,6 @@ void FFT_multiply_then_sum(const struct Param *param, const uint32_t *fft_a, con
 void evaluate_DPF_to_FFT(const struct Param *param, const struct Keys *keys, struct DPF_Output *dpf_output, uint32_t *fft_u);
 uint32_t pack_to_uint32(const size_t size, const uint32_t a);
 
-
-double bench_trace_pcg(size_t n, size_t c, size_t t);
+void trace_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
 
 #endif

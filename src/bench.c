@@ -17,7 +17,7 @@
 
 #define DPF_MSG_SIZE 8
 
-double bench_pcg(size_t n, size_t c, size_t t)
+void bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time)
 {
     if (c > 4)
     {
@@ -25,6 +25,7 @@ double bench_pcg(size_t n, size_t c, size_t t)
         exit(0);
     }
 
+    clock_t start_time = clock();
     const size_t poly_size = ipow(3, n);
 
     //************************************************************************
@@ -112,8 +113,7 @@ double bench_pcg(size_t n, size_t c, size_t t)
     // Step 3: Evaluate all the DPFs to recover shares of the c*c polynomials.
     //************************************************************************
 
-    clock_t time;
-    time = clock();
+    clock_t start_expand_time = clock();
 
     struct DPFKey *dpf_key;
     size_t key_index;
@@ -213,9 +213,8 @@ double bench_pcg(size_t n, size_t c, size_t t)
         }
     }
 
-    time = clock() - time;
-    double time_taken = ((double)time) / (CLOCKS_PER_SEC / 1000.0); // ms
-
+    double end_expand_time = clock();
+    double time_taken = ((double)(end_expand_time - start_expand_time)) / (CLOCKS_PER_SEC / 1000.0); // ms
     printf("Eval time (total) %f ms\n", time_taken);
     printf("DONE\n\n");
 
@@ -230,6 +229,9 @@ double bench_pcg(size_t n, size_t c, size_t t)
     free(packed_polys);
     free(res_poly_mat);
     free(z_poly);
+    clock_t end_time = clock();
 
-    return time_taken;
+    pcg_time->pp_time = ((double)(start_expand_time-start_time))/(CLOCKS_PER_SEC/1000.0);
+    pcg_time->expand_time = time_taken;
+    pcg_time->total_time = ((double)(end_time-start_time))/(CLOCKS_PER_SEC / 1000.0);
 }

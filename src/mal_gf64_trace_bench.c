@@ -14,9 +14,11 @@
 #define TENSOR_A_NUM 4
 #define RLT_NUM 2
 
-double mal_gf64_trace_bench_pcg(size_t n, size_t c, size_t t) {
+void mal_gf64_trace_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time) {
 
-   if (c > 4) {
+    clock_t start_time = clock();
+
+    if (c > 4) {
         printf("ERROR: currently only implemented for c <= 4");
         exit(0);
     }
@@ -43,7 +45,7 @@ double mal_gf64_trace_bench_pcg(size_t n, size_t c, size_t t) {
 
     convert_uint32_tensor_a_to_gf64(param, fft_mal_tensor_a, fft_mal_a_gf64_tensor, TENSOR_A_NUM);
     
-    clock_t time = clock();
+    clock_t start_expand_time = clock();
     // b0^2 x b1^2
     // b0 x b1^2
     // b0^2 x b1
@@ -67,8 +69,8 @@ double mal_gf64_trace_bench_pcg(size_t n, size_t c, size_t t) {
     mal_gf64_scalar_multiply_fft(param, mal_gf64_mult_rlts[3], scalar);
     mal_gf64_sum_polys(param, mal_gf64_mult_rlts, KEY_NUM, mal_gf64_final_rlts[1]);
 
-    time = clock()-time;
-    double time_taken = ((double)time) / (CLOCKS_PER_SEC / 1000.0); // ms
+    double end_expand_time = clock();
+    double time_taken = ((double)(end_expand_time - start_expand_time)) / (CLOCKS_PER_SEC / 1000.0); // ms
     printf("Eval time (total) %f ms\n", time_taken);
     printf("DONE\n\n");
     free_fft_mal_a_gf64_tensor(fft_mal_a_gf64_tensor, TENSOR_A_NUM);
@@ -77,9 +79,12 @@ double mal_gf64_trace_bench_pcg(size_t n, size_t c, size_t t) {
     free_mal_gf64_mult_buf(mal_gf64_mult_buf);
     free_mal_gf64_mult_rlts(mal_gf64_mult_rlts, KEY_NUM);
     free_mal_gf64_mult_rlts(mal_gf64_final_rlts, RLT_NUM);
-    
     free(param);
-    return time_taken;
+
+    clock_t end_time = clock();
+    pcg_time->pp_time = ((double)(start_expand_time-start_time))/(CLOCKS_PER_SEC/1000.0);
+    pcg_time->expand_time = time_taken;
+    pcg_time->total_time = ((double)(end_time-start_time))/(CLOCKS_PER_SEC / 1000.0);
 }
 
 void mal_gf64_sum_polys(const struct Param *param, struct Mal_GF64_Mult_Rlt **mal_gf64_mult_rlts, size_t size, struct Mal_GF64_Mult_Rlt *final_rlt) {

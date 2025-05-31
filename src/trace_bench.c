@@ -15,11 +15,14 @@
 #define DPF_MSG_SIZE 8
 #define RLT_NUM 2
 
-double bench_trace_pcg(size_t n, size_t c, size_t t) {
-   if (c > 4) {
+void trace_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time) {
+    if (c > 4)
+    {
         printf("ERROR: currently only implemented for c <= 4");
         exit(0);
     }
+    clock_t start_time = clock();
+    
     struct Param *param = calloc(1, sizeof(struct Param));
     init_bench_params(param, n, c, t);
     struct FFT_Trace_A *fft_trace_a = calloc(1, sizeof(struct FFT_Trace_A));
@@ -50,7 +53,7 @@ double bench_trace_pcg(size_t n, size_t c, size_t t) {
     uint8_t **final_mult_rlts = calloc(RLT_NUM, sizeof(uint8_t*));
     init_trace_mult_rlts(param, final_mult_rlts, RLT_NUM);
 
-    clock_t time = clock();
+    clock_t start_expand_time = clock();
     // Step 2: Evaluate all the DPFs to recover shares of the 2*c*c polynomials.
     // DPF is evaluated to fft_u1, fft_u2
     evaluate_DPF_to_FFT(param, keys1, dpf_output1, fft_u1);
@@ -70,11 +73,10 @@ double bench_trace_pcg(size_t n, size_t c, size_t t) {
     sum_poly(trace_mult_rlts[1], final_mult_rlts[1], final_mult_rlts[1], poly_size);
     trace_poly(final_mult_rlts[1], poly_size);
 
-    time = clock()-time;
-    double time_taken = ((double)time) / (CLOCKS_PER_SEC / 1000.0); // ms
+    double end_expand_time = clock();
+    double time_taken = ((double)(end_expand_time - start_expand_time)) / (CLOCKS_PER_SEC / 1000.0); // ms
     printf("Eval time (total) %f ms\n", time_taken);
-    printf("DONE\n\n");
-    printf("Benchmarking PCG evaluation \n");
+    printf("DONE Benchmarking PCG evaluation \n");
 
     free_DPF_output(dpf_output1);
     free_DPF_output(dpf_output2);
@@ -87,7 +89,11 @@ double bench_trace_pcg(size_t n, size_t c, size_t t) {
     free_DPF_keys(param, keys1);
     free_DPF_keys(param, keys2);
     free(param);
-    return time_taken;
+
+    clock_t end_time = clock();
+    pcg_time->pp_time = ((double)(start_expand_time-start_time))/(CLOCKS_PER_SEC/1000.0);
+    pcg_time->expand_time = time_taken;
+    pcg_time->total_time = ((double)(end_time-start_time))/(CLOCKS_PER_SEC / 1000.0);
 }
 
 // Step 1: Sample DPF keys for the cross product.

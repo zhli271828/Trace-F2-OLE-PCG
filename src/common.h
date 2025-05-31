@@ -28,10 +28,24 @@ struct Param {
     size_t block_size;
     size_t dpf_block_size;
     size_t dpf_domain_bits;
+    size_t block_bits;
     size_t packed_poly_size;
     size_t packed_block_size;
     uint128_t zeta128;
     uint64_t zeta64;
+    size_t m;
+    size_t k;
+    size_t s;
+    uint64_t modulus64;
+    uint64_t K64;
+    uint128_t modulus128;
+    uint64_t K128;
+};
+
+struct PCG_Time {
+    double pp_time;
+    double expand_time;
+    double total_time;
 };
 
 // init the FFT_Mal_Tensor_A structure

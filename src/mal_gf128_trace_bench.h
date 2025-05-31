@@ -83,6 +83,6 @@ void mal_gf128_multiply_then_sum(
     struct Mal_GF128_Mult_Rlt *mal_gf128_mult_rlt // value and MAC results
 );
 
-double mal_gf128_trace_bench_pcg(size_t n, size_t c, size_t t);
+void mal_gf128_trace_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
 
 #endif

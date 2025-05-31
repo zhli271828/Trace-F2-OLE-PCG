@@ -14,6 +14,54 @@
 
 #define DPF_MSG_SIZE 8
 
+void init_SPDZ2k_32_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
+    param->k = k;
+    param->s = s;
+    param->modulus64 = 1<<(k+s);
+    RAND_bytes((uint8_t *)&param->K64, sizeof(param->K64));
+    param->K64 = param->K64%param->modulus64;
+    init_gr64_bench_params(param, n, c, t, m);
+}
+
+void init_SPDZ2k_64_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
+    param->k = k;
+    param->s = s;
+    param->modulus128 = 1<<(k+s);
+    RAND_bytes((uint8_t *)&param->K128, sizeof(param->K128));
+    param->K128 = param->K128%param->modulus128;
+    init_gr128_bench_params(param, n, c, t, m);
+}
+
+void init_gr64_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m) {
+    init_gr_bench_params(param, n, c, t, m);
+}
+void init_gr128_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m) {
+    init_gr_bench_params(param, n, c, t, m);
+}
+// for GR64 and GR128
+void init_gr_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m) {
+
+    param->n=n;
+    param->c=c;
+    param->t=t;
+    param->m=m;
+    size_t poly_size = ipow(3, n);
+    size_t block_size = ceil(poly_size / t);
+    printf("block_size = %zu \n", block_size);
+    // size_t dpf_domain_bits = ceil(log_base(poly_size / (t*t), 3));
+    size_t dpf_domain_bits = (size_t)(log_base(poly_size / (t*t), 3));
+    printf("DPF domain bits %zu \n", dpf_domain_bits);
+    size_t dpf_block_size = ipow(3, dpf_domain_bits);
+    printf("dpf_block_size = %zu\n", dpf_block_size);
+    size_t block_bits = (size_t)(log_base(poly_size/t, 3));
+    printf("block_bits = %zu\n", block_bits);
+    param->poly_size = poly_size;
+    param->block_size = block_size;
+    param->dpf_block_size = dpf_block_size;
+    param->dpf_domain_bits = dpf_domain_bits;
+    param->block_bits = block_bits;
+}
+
 void init_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t) {
     param->n=n;
     param->c=c;
@@ -55,7 +103,7 @@ void sample_DPF_keys(const struct Param* param, struct Keys *keys) {
     
     size_t c = param->c;
     size_t t = param->t;
-    size_t block_size = param->block_size;
+    size_t dpf_block_size = param->dpf_block_size;
     size_t dpf_domain_bits = param->dpf_domain_bits;
 
     struct DPFKey **dpf_keys_A = malloc(c * c * t * t * sizeof(void *));
@@ -70,7 +118,7 @@ void sample_DPF_keys(const struct Param* param, struct Keys *keys) {
                 for (size_t l=0; l<t; ++l) {
                     size_t index = i*c*t*t+j*t*t+k*t+l;
                     // Pick a random index for benchmarking purposes
-                    size_t alpha = random_index(block_size);
+                    size_t alpha = random_index(dpf_block_size);
                     uint128_t beta[DPF_MSG_SIZE]={0};
                     RAND_bytes((uint8_t *)beta, DPF_MSG_SIZE*sizeof(uint128_t));
                     // DPF keys
@@ -90,7 +138,7 @@ void sample_DPF_keys(const struct Param* param, struct Keys *keys) {
 }
 
 // Step 2: Evaluate all the DPFs to recover shares of the c*c polynomials.
-double evaluate_DPF(const struct Param *param, const struct FFT_A *fft, const struct Keys *keys) {
+double evaluate_DPF(const struct Param *param, const struct FFT_A *fft, const struct Keys *keys, clock_t *start_expand_time) {
     const size_t c = param->c;
     const size_t t = param->t;
     const size_t n = param->n;
@@ -111,7 +159,7 @@ double evaluate_DPF(const struct Param *param, const struct FFT_A *fft, const st
     uint8_t *z_poly = calloc(poly_size, sizeof(uint8_t));
     uint32_t *res_poly_mat = calloc(poly_size, sizeof(uint32_t));
 
-    clock_t time = clock();
+    *start_expand_time = clock();
     for (size_t i=0; i<c; ++i) {
         for (size_t j=0; j<c; ++j) {
             const size_t poly_index=i*c+j;
@@ -133,10 +181,6 @@ double evaluate_DPF(const struct Param *param, const struct FFT_A *fft, const st
         }
     }
 
-    // size_t block_idx = 0;
-    // size_t coeff_idx = 0;
-    // size_t packed_coeff_idx = 0;
-    // uint128_t packed_coeff = 0;
     for (size_t i=0; i<c*c; ++i) {
         size_t poly_index = i*packed_poly_size;
         const uint128_t *poly = &packed_polys[poly_index];
@@ -174,23 +218,15 @@ double evaluate_DPF(const struct Param *param, const struct FFT_A *fft, const st
     }
     fft_recursive_uint32(fft_u, n, poly_size / 3);
     multiply_fft_32(fft->fft_a2, fft_u, res_poly_mat, poly_size);
-    // Perform column-wise XORs to get the result
-    // for (size_t i = 0; i < poly_size; i++) {
-    //     // XOR the (packed) columns into the accumulator
-    //     for (size_t j = 0; j < c * c; j++) {
-    //         z_poly[i] ^= res_poly_mat[i] & 0b11;
-    //         res_poly_mat[i] = res_poly_mat[i] >> 2;
-    //     }
-    // }
 
     for (size_t j = 0; j < c * c; j++) {
         for (size_t i = 0; i < poly_size; i++) {
             z_poly[i] ^= (res_poly_mat[i] >> (2 * j)) & 0b11;
         }
     }
-    time = clock()-time;
-    double time_taken = ((double)time) / (CLOCKS_PER_SEC / 1000.0); // ms
 
+    double end_expand_time = clock();
+    double time_taken = ((double)(end_expand_time - *start_expand_time)) / (CLOCKS_PER_SEC / 1000.0); // ms
     printf("Eval time (total) %f ms\n", time_taken);
     printf("DONE\n\n");
 
@@ -295,11 +331,13 @@ double evaluate_DPF2(const struct Param *param, const struct FFT_A *fft, const s
     return time_taken;
 }
 
-double modular_bench_pcg(size_t n, size_t c, size_t t) {
+void modular_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time) {
    if (c > 4) {
         printf("ERROR: currently only implemented for c <= 4");
         exit(0);
     }
+
+    clock_t start_time = clock();
     struct Param *param = calloc(1, sizeof(struct Param));
     init_bench_params(param, n, c, t);
 
@@ -308,9 +346,14 @@ double modular_bench_pcg(size_t n, size_t c, size_t t) {
     struct Keys *keys = calloc(1, sizeof(struct Keys));
     sample_DPF_keys(param, keys);
     printf("Benchmarking PCG evaluation \n");
-    double time_taken = evaluate_DPF(param, fft, keys);
+    clock_t start_expand_time = 0;
+    double time_taken = evaluate_DPF(param, fft, keys, &start_expand_time);
     step0_free(fft);
     step4_free(param, keys);
     free(param);
-    return time_taken;
+
+    clock_t end_time = clock();
+    pcg_time->pp_time = (start_expand_time-start_time)/(CLOCKS_PER_SEC/1000.0);
+    pcg_time->expand_time = time_taken;
+    pcg_time->total_time = (end_time-start_time)/(CLOCKS_PER_SEC / 1000.0);
 }

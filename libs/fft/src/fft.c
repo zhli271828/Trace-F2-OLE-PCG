@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include "fft.h"
 #include "utils.h"
-#include "gf128.h"
+// #include "gf128.h"
+#include "gr64_bench.h"
+#include "gr128_bench.h"
 
 void fft_recursive_uint64(
     uint64_t *coeffs,
@@ -10,9 +12,7 @@ void fft_recursive_uint64(
     const size_t num_coeffs)
 {
     // coeffs (coeffs_h, coeffs_l) are parsed as L(left)|M(middle)|R(right)
-
-    if (num_vars > 1)
-    {
+    if (num_vars > 1) {
         // apply FFT on all left coefficients
         fft_recursive_uint64(
             &coeffs[0],
@@ -114,6 +114,45 @@ void fft_iterative_uint32_no_data(
     }
 }
 
+void fft_iterative_uint64_no_data(
+    uint64_t *a,
+    uint64_t *rlt,
+    const size_t num_vars,
+    const size_t num_coeffs)
+{
+
+    uint64_t *pre = a;
+    uint64_t *cur = rlt;
+
+    static uint64_t zeta_64 = 0xAAAAAAAAAAAAAAAA;
+
+    for (size_t i = 0; i < num_vars; ++i)
+    {
+        size_t blk_num = ipow(3, num_vars - (i + 1));
+        size_t pow_3_i = ipow(3, i);
+        for (size_t blk_id = 0; blk_id < blk_num; blk_id++)
+        {
+            for (size_t j = blk_id * 3 * pow_3_i; j < blk_id * 3 * pow_3_i + pow_3_i; ++j)
+            {
+                uint64_t f0 = pre[j];
+                uint64_t f1 = pre[j + pow_3_i];
+                uint64_t f2 = pre[j + 2 * pow_3_i];
+                uint64_t tmp_mult = multiply_64(f1 ^ f2, zeta_64);
+                cur[j] = f0 ^ f1 ^ f2;
+                cur[j + pow_3_i] = f0 ^ f2 ^ tmp_mult;
+                cur[j + 2 * pow_3_i] = f0 ^ f1 ^ tmp_mult;
+            }
+        }
+        uint64_t *tmp = pre;
+        pre = cur;
+        cur = tmp;
+    }
+    if (num_vars % 2 == 0)
+    {
+        memcpy(rlt, a, sizeof(uint64_t) * num_coeffs);
+    }
+}
+
 void fft_iterative_uint32(
     const uint32_t *a,
     uint32_t *cache,
@@ -199,6 +238,301 @@ void fft_recursive_uint32(
 
         coeffsL[j] = tL;
         coeffsM[j] = tM;
+    }
+}
+
+void fft_iterative_gr64_no_data(
+    uint64_t *a0,
+    uint64_t *a1,
+    uint64_t *rlt0,
+    uint64_t *rlt1,
+    const size_t num_vars,
+    const size_t num_coeffs) {
+
+    uint64_t *pre0 = a0;
+    uint64_t *pre1 = a1;
+    uint64_t *cur0 = rlt0;
+    uint64_t *cur1 = rlt1;
+
+    for (size_t i = 0; i < num_vars; ++i) {
+        size_t blk_num = ipow(3, num_vars-(i+1));
+        size_t pow_3_i = ipow(3, i);
+        for (size_t blk_id = 0; blk_id < blk_num; blk_id++) {
+            for (size_t j=blk_id*3*pow_3_i; j < blk_id*3*pow_3_i+pow_3_i; ++j) {
+                uint64_t f00 = pre0[j];
+                uint64_t f10 = pre0[j+pow_3_i];
+                uint64_t f20 = pre0[j+2*pow_3_i];
+                uint64_t f01 = pre1[j];
+                uint64_t f11 = pre1[j+pow_3_i];
+                uint64_t f21 = pre1[j+2*pow_3_i];
+
+                uint64_t tmp_mult0 = -(f11-f21);
+                uint64_t tmp_mult1 = (f10-f20) - (f11-f21);
+
+                cur0[j] = f00+f10+f20;
+                cur1[j] = f01+f11+f21;
+
+                cur0[j+pow_3_i] = f00-f20+tmp_mult0;
+                cur1[j+pow_3_i] = f01-f21+tmp_mult1;
+
+                cur0[j+2*pow_3_i] = f00-f10-tmp_mult0;
+                cur1[j+2*pow_3_i] = f01-f11-tmp_mult1;
+            }
+        }
+        uint64_t *tmp0 = pre0;
+        uint64_t *tmp1 = pre1;
+        pre0 = cur0; pre1 = cur1;
+        cur0 = tmp0; cur1 = tmp1;
+    }
+    if (num_vars%2==0) {
+        memcpy(rlt0, a0, sizeof(uint64_t)*num_coeffs);
+        memcpy(rlt1, a1, sizeof(uint64_t)*num_coeffs);
+    }
+}
+
+void fft_iterative_gr64(
+    const uint64_t *a0,
+    const uint64_t *a1,
+    uint64_t *cache0,
+    uint64_t *cache1,
+    uint64_t *rlt0,
+    uint64_t *rlt1,
+    const size_t num_vars,
+    const size_t num_coeffs
+    ) {
+
+    memcpy(cache0, a0, sizeof(uint64_t)*num_coeffs);
+    memcpy(cache1, a1, sizeof(uint64_t)*num_coeffs);
+    fft_iterative_gr64_no_data(cache0, cache1, rlt0, rlt1, num_vars, num_coeffs);
+}
+
+void fft_recursive_gr64(
+    struct GR64 *coeffs,
+    const size_t num_vars,
+    const size_t num_coeffs
+    ) {
+    // coeffs (coeffs_h, coeffs_l) are parsed as L(left)|M(middle)|R(right)
+    if (num_vars > 1) {
+        // apply FFT on all left coefficients
+        fft_recursive_gr64(
+            &coeffs[0],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all middle coefficients
+        fft_recursive_gr64(
+            &coeffs[num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all right coefficients
+        fft_recursive_gr64(
+            &coeffs[2 * num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+    }
+
+    // temp variables to store intermediate values
+    struct GR64 tL, tM;
+    struct GR64 mult;
+
+    struct GR64 *coeffsL = &coeffs[0];
+    struct GR64 *coeffsM = &coeffs[num_coeffs];
+    struct GR64 *coeffsR = &coeffs[2 * num_coeffs];
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        
+        // pre compute: \alpha * (cM[j] ^ cR[j])
+        // TODO: optimize this code via direct multiplication
+        mult.c0 = coeffsM[j].c1 - coeffsR[j].c1;
+        mult.c1 = (coeffsM[j].c0 - coeffsR[j].c0)-(coeffsM[j].c1-coeffsR[j].c1);
+
+        // TODO: add three points
+        // tL coefficient obtained by evaluating on X_i=1
+        tL.c0 = coeffsL[j].c0 + coeffsM[j].c0 + coeffsR[j].c0;
+        tL.c1 = coeffsL[j].c1 + coeffsM[j].c1 + coeffsR[j].c1;
+
+        // tM coefficient obtained by evaluating on X_i=\alpha
+        tM.c0 = coeffsL[j].c0 - coeffsR[j].c0 + mult.c0;
+        tM.c1 = coeffsL[j].c1 - coeffsR[j].c1 + mult.c1;
+
+        // tR: coefficient obtained by evaluating on X_i=\alpha^2=-\alpha - 1
+        coeffsR[j].c0 = coeffsL[j].c0 - coeffsM[j].c0 - mult.c0;
+        coeffsR[j].c1 = coeffsL[j].c1 - coeffsM[j].c1 - mult.c1;
+
+        memcpy(&coeffsL[j], &tL, sizeof(struct GR64));
+        memcpy(&coeffsM[j], &tM, sizeof(struct GR64));
+    }
+}
+
+void fft_recursive_SPDZ2k_32(
+    struct GR64 *coeffs,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const uint64_t modulus64
+    ) {
+    // coeffs (coeffs_h, coeffs_l) are parsed as L(left)|M(middle)|R(right)
+    if (num_vars > 1) {
+        // apply FFT on all left coefficients
+        fft_recursive_gr64(
+            &coeffs[0],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all middle coefficients
+        fft_recursive_gr64(
+            &coeffs[num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all right coefficients
+        fft_recursive_gr64(
+            &coeffs[2 * num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+    }
+
+    // temp variables to store intermediate values
+    struct GR64 tL, tM;
+    struct GR64 mult;
+
+    struct GR64 *coeffsL = &coeffs[0];
+    struct GR64 *coeffsM = &coeffs[num_coeffs];
+    struct GR64 *coeffsR = &coeffs[2 * num_coeffs];
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        
+        // pre compute: \alpha * (cM[j] ^ cR[j])
+        // TODO: optimize this code via direct multiplication
+        mult.c0 = (coeffsM[j].c1 - coeffsR[j].c1)%modulus64;
+        mult.c1 = ((coeffsM[j].c0 - coeffsR[j].c0)-(coeffsM[j].c1-coeffsR[j].c1))%modulus64;
+
+        // TODO: add three points
+        // tL coefficient obtained by evaluating on X_i=1
+        tL.c0 = (coeffsL[j].c0 + coeffsM[j].c0 + coeffsR[j].c0)%modulus64;
+        tL.c1 = (coeffsL[j].c1 + coeffsM[j].c1 + coeffsR[j].c1)%modulus64;
+
+        // tM coefficient obtained by evaluating on X_i=\alpha
+        tM.c0 = (coeffsL[j].c0 - coeffsR[j].c0 + mult.c0)%modulus64;
+        tM.c1 = (coeffsL[j].c1 - coeffsR[j].c1 + mult.c1)%modulus64;
+
+        // tR: coefficient obtained by evaluating on X_i=\alpha^2=-\alpha - 1
+        coeffsR[j].c0 = (coeffsL[j].c0 - coeffsM[j].c0 - mult.c0)%modulus64;
+        coeffsR[j].c1 = (coeffsL[j].c1 - coeffsM[j].c1 - mult.c1)%modulus64;
+
+        memcpy(&coeffsL[j], &tL, sizeof(struct GR64));
+        memcpy(&coeffsM[j], &tM, sizeof(struct GR64));
+    }
+}
+
+void fft_recursive_SPDZ2k_64(
+    struct GR128 *coeffs,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const uint128_t modulus128
+    ) {
+    // coeffs (coeffs_h, coeffs_l) are parsed as L(left)|M(middle)|R(right)
+    if (num_vars > 1) {
+        // apply FFT on all left coefficients
+        fft_recursive_gr128(
+            &coeffs[0],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all middle coefficients
+        fft_recursive_gr128(
+            &coeffs[num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all right coefficients
+        fft_recursive_gr128(
+            &coeffs[2 * num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+    }
+
+    // temp variables to store intermediate values
+    struct GR128 tL, tM;
+    struct GR128 mult;
+
+    struct GR128 *coeffsL = &coeffs[0];
+    struct GR128 *coeffsM = &coeffs[num_coeffs];
+    struct GR128 *coeffsR = &coeffs[2 * num_coeffs];
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        
+        // pre compute: \alpha * (cM[j] ^ cR[j])
+        // TODO: optimize this code via direct multiplication
+        mult.c0 = (coeffsM[j].c1 - coeffsR[j].c1)%modulus128;
+        mult.c1 = ((coeffsM[j].c0 - coeffsR[j].c0)-(coeffsM[j].c1-coeffsR[j].c1))%modulus128;
+
+        // TODO: add three points
+        // tL coefficient obtained by evaluating on X_i=1
+        tL.c0 = (coeffsL[j].c0 + coeffsM[j].c0 + coeffsR[j].c0)%modulus128;
+        tL.c1 = (coeffsL[j].c1 + coeffsM[j].c1 + coeffsR[j].c1)%modulus128;
+
+        // tM coefficient obtained by evaluating on X_i=\alpha
+        tM.c0 = (coeffsL[j].c0 - coeffsR[j].c0 + mult.c0)%modulus128;
+        tM.c1 = (coeffsL[j].c1 - coeffsR[j].c1 + mult.c1)%modulus128;
+
+        // tR: coefficient obtained by evaluating on X_i=\alpha^2=-\alpha - 1
+        coeffsR[j].c0 = (coeffsL[j].c0 - coeffsM[j].c0 - mult.c0)%modulus128;
+        coeffsR[j].c1 = (coeffsL[j].c1 - coeffsM[j].c1 - mult.c1)%modulus128;
+
+        memcpy(&coeffsL[j], &tL, sizeof(struct GR128));
+        memcpy(&coeffsM[j], &tM, sizeof(struct GR128));
+    }
+}
+
+void fft_recursive_gr128(
+    struct GR128 *coeffs,
+    const size_t num_vars,
+    const size_t num_coeffs
+    ) {
+    // coeffs (coeffs_h, coeffs_l) are parsed as L(left)|M(middle)|R(right)
+    if (num_vars > 1) {
+        // apply FFT on all left coefficients
+        fft_recursive_gr128(
+            &coeffs[0],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all middle coefficients
+        fft_recursive_gr128(
+            &coeffs[num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+        // apply FFT on all right coefficients
+        fft_recursive_gr128(
+            &coeffs[2 * num_coeffs],
+            num_vars - 1,
+            num_coeffs / 3);
+    }
+
+    // temp variables to store intermediate values
+    struct GR128 tL, tM;
+    struct GR128 mult;
+
+    struct GR128 *coeffsL = &coeffs[0];
+    struct GR128 *coeffsM = &coeffs[num_coeffs];
+    struct GR128 *coeffsR = &coeffs[2 * num_coeffs];
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        
+        // pre compute: \alpha * (cM[j] ^ cR[j])
+        // TODO: optimize this code via direct multiplication
+        mult.c0 = coeffsM[j].c1 - coeffsR[j].c1;
+        mult.c1 = (coeffsM[j].c0 - coeffsR[j].c0)-(coeffsM[j].c1-coeffsR[j].c1);
+
+        // TODO: add three points
+        // tL coefficient obtained by evaluating on X_i=1
+        tL.c0 = coeffsL[j].c0 + coeffsM[j].c0 + coeffsR[j].c0;
+        tL.c1 = coeffsL[j].c1 + coeffsM[j].c1 + coeffsR[j].c1;
+
+        // tM coefficient obtained by evaluating on X_i=\alpha
+        tM.c0 = coeffsL[j].c0 - coeffsR[j].c0 + mult.c0;
+        tM.c1 = coeffsL[j].c1 - coeffsR[j].c1 + mult.c1;
+
+        // tR: coefficient obtained by evaluating on X_i=\alpha^2=-\alpha - 1
+        coeffsR[j].c0 = coeffsL[j].c0 - coeffsM[j].c0 - mult.c0;
+        coeffsR[j].c1 = coeffsL[j].c1 - coeffsM[j].c1 - mult.c1;
+
+        memcpy(&coeffsL[j], &tL, sizeof(struct GR128));
+        memcpy(&coeffsM[j], &tM, sizeof(struct GR128));
     }
 }
 

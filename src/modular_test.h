@@ -95,6 +95,6 @@ void step7_free(struct Z_Polys *z_polys);
 void init_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t);
 void sample_DPF_keys(const struct Param* param, struct Keys *keys);
 void modular_test_pcg();
-double modular_bench_pcg(size_t n, size_t c, size_t t);
+void modular_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
 
 #endif
