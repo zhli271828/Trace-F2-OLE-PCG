@@ -16,6 +16,7 @@ The [src/](src/) folder contains the code for benchmark tests.
 - [src/gr128_trace_bench.c](src/gr128_trace_bench.c) implements benchmarks for the semi-honest multiplication triples over $\mathbb{Z}_{2^{64}}$ based on the generalized trace functions.
 - [src/SPDZ2k_32_bench.c](src/SPDZ2k_32_bench.c) implements benchmarks for the authenticated multiplication triples over $\mathbb{Z}_{2^{32}}$.
 - [src/SPDZ2k_64_bench.c](src/SPDZ2k_64_bench.c) implements benchmarks for the authenticated multiplication triples over $\mathbb{Z}_{2^{64}}$.
+- [src/SPDZ2k_32_d3_bench.c](src/SPDZ2k_32_d3_bench.c) implements benchmarks for the authenticated multiplication triples over $\mathbb{Z}_{2^{32}}$ from Galois of degree $3$.
 
 ## Dependencies
 These dependencies are required by the [ternary DPF](https://github.com/sachaservan/tri-dpf) submodule.
@@ -51,6 +52,7 @@ make
 ./bin/pcg --gr128_trace_bench
 ./bin/pcg --SPDZ2k_32_bench
 ./bin/pcg --SPDZ2k_64_bench
+./bin/pcg --SPDZ2k_32_D3_bench
 ```
 
 <!-- ## Parameter Selection
@@ -74,7 +76,7 @@ TODOs are left in-line, however, the broad strokes include:
 
 ## ⚠️ Important Warning
 
-Very recently, a [paper](https://eprint.iacr.org/2025/892) showed that the QA-SD problem with parameters $(c=3, t=27, q=4, n=16)$ is insecure. To make the attack infeasible, the paper proposed to use parameter satisfying $c\ge 1+(n-1)/(q-1)$. Here are some example parameters $(c=9,t=9,q=4,n<=25)$, $(c=3, t=49, q=8, n<=15)$ or $(c=6, t=15, q=16, n<=76)$.
+Very recently, a [paper](https://eprint.iacr.org/2025/892) showed that the QA-SD problem with parameter $(c=3, t=27, q=4, n=16)$ is insecure. To make the attack infeasible, the paper proposed to use parameter satisfying $c\ge 1+(n-1)/(q-1)$. Here are some example parameters $(c=9,t=9,q=4,n<=25)$, $(c=3, t=49, q=8, n<=15)$ or $(c=6, t=15, q=16, n<=76)$.
 
 <b>This implementation is intended for _research purposes only_. The code has NOT been reviewed by security experts.
 As such, no portion of the code should be used in any real-world or production setting!</b>

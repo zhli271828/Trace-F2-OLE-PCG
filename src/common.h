@@ -37,9 +37,13 @@ struct Param {
     size_t k;
     size_t s;
     uint64_t modulus64;
+    // Global key for mod 2^{64}
     uint64_t K64;
     uint128_t modulus128;
+    // Global key for mod 2^{128}
     uint64_t K128;
+    // Base for high degree extension. Generally, it is 2^m-1.
+    size_t base;
 };
 
 struct PCG_Time {

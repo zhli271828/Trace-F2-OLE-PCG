@@ -13,6 +13,7 @@ void gr64_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time) {
     clock_t start_time = clock();
 
     struct Param *param = xcalloc(1, sizeof(struct Param));
+    // In this Galois ring based parameters, m stands for the number of extraction of PCG OLE. For instance, the OLE over Galois ring sets m=1. while in trace-based OLE over Z_{p^k} and authenticated multiplication triples, m is set to 2.
     size_t m = 1;
     init_gr64_bench_params(param, n, c, t, m);
     struct FFT_GR64_A *fft_gr64_a = xcalloc(1, sizeof(struct FFT_GR64_A));
@@ -63,6 +64,10 @@ void gr64_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time) {
     pcg_time->total_time = ((double)(end_time-start_time))/(CLOCKS_PER_SEC / 1000.0);
 }
 
+/**
+ * Init the space for a and a x a.
+ * The parameter c matters for memory allocation.
+ */
 void init_FFT_GR64_A(const struct Param *param, struct FFT_GR64_A *fft_gr64_a) {
 
     size_t poly_size = param->poly_size;
@@ -95,6 +100,9 @@ void free_FFT_GR64_A(const struct Param *param, struct FFT_GR64_A *fft_gr64_a) {
     free(fft_gr64_a);
 }
 
+/**
+ * Randomize a in FFT space first and then compute a x a in FFT space.
+ */
 void sample_gr64_a_and_tensor(const struct Param *param, struct FFT_GR64_A *fft_gr64_a) {
 
     const size_t poly_size = param->poly_size;
@@ -125,6 +133,59 @@ void mult_gr64(const struct GR64 *a, const struct GR64 *b, struct GR64 *t) {
     t->c1 = a->c0*b->c1 + a->c1*b->c0 - a->c1 * b->c1;
 }
 
+void add_gr64_D3(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
+    t->c0 = a->c0 + b->c0;
+    t->c1 = a->c1 + b->c1;
+    t->c2 = a->c2 + b->c2;
+}
+
+// Multiply two degree 3 GR64 elements mod X^3 + 17520588382079786918*X^2 + 17520588382079786917*X - 1
+void mult_gr64_D3(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
+// Modulus: X^3 + aX^2 + bX - 1
+    const static uint64_t A = 17520588382079786918ULL;
+    const static uint64_t B = 17520588382079786917ULL;
+
+    // Compute negative coefficients modulo 2^64
+    const static uint64_t A_ = ~A + 1; // -A mod 2^64
+    const static uint64_t B_ = ~B + 1; // -B mod 2^64
+
+    // Intermediate products (up to degree 4)
+    uint64_t c0 = a->c0 * b->c0;
+    uint64_t c1 = a->c0 * b->c1 + a->c1 * b->c0;
+    uint64_t c2 = a->c0 * b->c2 + a->c1 * b->c1 + a->c2 * b->c0;
+    uint64_t c3 = a->c1 * b->c2 + a->c2 * b->c1;
+    uint64_t c4 = a->c2 * b->c2;
+
+    // Reduce c4 (X^4)
+    // X^4 ≡ -X^2 - X + A_ mod f
+    uint64_t r4_c2 = -1;
+    uint64_t r4_c1 = -1;
+    uint64_t r4_c0 = A_;
+
+    c0 += c4 * r4_c0;
+    c1 += c4 * r4_c1;
+    c2 += c4 * r4_c2;
+
+    // Reduce c3 (X^3 ≡ A_*X^2 + B_*X + 1)
+    c0 += c3;
+    c1 += c3 * B_;
+    c2 += c3 * A_;
+
+    t->c0 = c0;
+    t->c1 = c1;
+    t->c2 = c2;
+}
+
+// Multiply two degree 3 GR64 arrays
+void mult_gr64_D3_list(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D3 *t, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        mult_gr64_D3(&a[i], &b[i], &t[i]);
+    }
+}
+
+void mult_gr64_D4(const struct GR64_D4 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
+    printf("Not implemented function mult_gr64_D4");
+}
 // sample c*c*m*t*t DPF keys
 void sample_gr64_DPF_keys(const struct Param *param, struct Keys *keys) {
     size_t c = param->c;

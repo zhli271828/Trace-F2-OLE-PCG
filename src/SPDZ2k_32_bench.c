@@ -64,6 +64,9 @@ void SPDZ2k_32_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time
     pcg_time->total_time = ((double)(end_time-start_time))/(CLOCKS_PER_SEC / 1000.0);
 }
 
+/**
+ * Sample a and axa in FFT form.
+ */
 void sample_SPDZ2k_32_a_and_tensor(const struct Param *param, struct FFT_GR64_Trace_A *fft_gr64_trace_a) {
     // TODO: merge to the same function
     // call sample_gr64_trace_a_and_tensor to compute the relation first and then mod the special modulus
@@ -75,6 +78,7 @@ void sample_SPDZ2k_32_a_and_tensor(const struct Param *param, struct FFT_GR64_Tr
     const size_t poly_size = param->poly_size;
     const size_t c = param->c;
 
+    // reduce a
     for (size_t i = 1; i < c; ++i) {
         for (size_t j = 0; j < poly_size; ++j) {
             fft_a[i][j].c0 = fft_a[i][j].c0 % modulus64;
@@ -167,8 +171,8 @@ void free_SPDZ2k_32_b_DPF_keys(const struct Param *param, struct Keys *keys) {
 }
 
 /**
- * Evaluate the DPF keys to polynomials
- * @param polys is of length c*poly_size*DPF_MSG_LEN=c*t*block_size*DPF_MSG_LEN
+ * Evaluate the DPF keys to polynomials containing both the output value and the MAC value: each is of length c*t*block_size=c*poly_size.
+ * @param polys is of length c*poly_size*DPF_MSG_LEN=c*t*block_size*DPF_MSG_LEN=c*poly_size*DPF_MSG_LEN.
  * @param shares is of length block_size*DPF_MSG_LEN*DPF_MSG_NUM
  * @param cache is of length block_size*DPF_MSG_LEN*DPF_MSG_NUM
  */
@@ -185,6 +189,7 @@ void evaluate_SPDZ2k_32_b_DPF(const struct Param *param, const struct Keys *keys
             struct GR64 *poly_block = &polys[poly_index*block_size*DPF_MSG_LEN];
             const size_t key_index = poly_index;
             struct DPFKey *dpf_key = keys->dpf_keys_A[key_index];
+            // DPF evaluates the value and the MAC in consecutive positions and copy_gr64_block parses the DPF evaluation results
             DPFFullDomainEval(dpf_key, cache, shares);
             copy_gr64_block(poly_block, shares, DPF_MSG_LEN*block_size);
         }
@@ -252,8 +257,15 @@ void sum_SPDZ2k_32_b_FFT_polys(const struct Param *param, struct GR64 *poly_buf,
     }
 }
 
+/**
+ * evaluate for b and K*b
+ * 1 Evaluate DPF to poly
+ * 2 Convert poly to FFT
+ * 3 Multiply with a
+ * 4 Sum up to obtain b
+ */
 // evaluate DPF to poly, convert poly to FFT, multiply with a and sum up
-void evaluate_SPDZ_32_b_DPF_and_sum(
+void evaluate_SPDZ2k_32_b_DPF_and_sum(
     const struct Param *param,
     const struct Keys *keys,
     struct GR64 **fft_a,
@@ -269,7 +281,14 @@ void evaluate_SPDZ_32_b_DPF_and_sum(
     sum_SPDZ2k_32_b_FFT_polys(param, poly_buf, z_poly);
 }
 
-// Compute (Tr(b), Tr(zeta*b)) and (Tr(K*b), Tr(zeta*K*b))
+/**
+ * Compute (Tr(b), Tr(zeta*b)) and (Tr(K*b), Tr(zeta*K*b))
+ * src is for b and K*b and each is of length poly_size
+ * b_0 is for Tr(b)
+ * b_1 is for Tr(zeta*b)
+ * bm_0 is for Tr(K*b)
+ * bm_1 is for Tr(K*zeta*b)
+ */
 void trace_SPDZ2k_32_b_FFT_polys(const struct Param *param, const struct GR64 *src, uint64_t *b_0, uint64_t *b_1, uint64_t *bm_0, uint64_t *bm_1) {
     const size_t poly_size = param->poly_size;
     const uint64_t modulus64 = param->modulus64;
@@ -287,6 +306,9 @@ void trace_SPDZ2k_32_b_FFT_polys(const struct Param *param, const struct GR64 *s
     }
 }
 
+/**
+ * init the memory for b and sample the DPF_keys
+ */
 void init_SPDZ2k_32_b(const struct Param *param, struct SPDZ2k_32_b *spdz2k_32_b) {
 
     size_t c = param->c;
@@ -375,16 +397,27 @@ void run_SPDZ2k_32_b(const struct Param *param, struct SPDZ2k_32_b *spdz2k_32_b,
     uint128_t *shares = spdz2k_32_b->shares;
     uint128_t *cache = spdz2k_32_b->cache;
 
+    /**
+     * evaluate for b0 and K*b0
+     * 1 Evaluate DPF to poly
+     * 2 Convert poly to FFT
+     * 3 Multiply with a
+     * 4 Sum up to obtain b
+     * 5 Compute the trace for zeta^j*b
+     */
     // evaluate for b0 and K*b0
-    evaluate_SPDZ_32_b_DPF_and_sum(param, keys_b0, fft_a, polys, poly_buf, z_poly, shares, cache);
+    evaluate_SPDZ2k_32_b_DPF_and_sum(param, keys_b0, fft_a, polys, poly_buf, z_poly, shares, cache);
     trace_SPDZ2k_32_b_FFT_polys(param, z_poly, b0_0, b0_1, bm0_0, bm0_1);
     
     // evaluate for b1 and K*b1
     memset(z_poly, 0, poly_size*sizeof(struct GR64));
-    evaluate_SPDZ_32_b_DPF_and_sum(param, keys_b1, fft_a, polys, poly_buf, z_poly, shares, cache);
+    evaluate_SPDZ2k_32_b_DPF_and_sum(param, keys_b1, fft_a, polys, poly_buf, z_poly, shares, cache);
     trace_SPDZ2k_32_b_FFT_polys(param, z_poly, b1_0, b1_1, bm1_0, bm1_1);
 }
 
+/**
+ * Init the memory for products and sample the DPF keys.
+ */
 void init_SPDZ2k_32_prod(const struct Param *param, struct SPDZ2k_32_Prod *spdz2k_32_prod) {
 
     size_t c = param->c;

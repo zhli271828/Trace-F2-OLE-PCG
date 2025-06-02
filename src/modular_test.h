@@ -43,6 +43,12 @@ struct Keys {
     struct PRFKeys* prf_keys;
 };
 
+struct KeysHD {
+    struct DPFKeyZ** dpf_keys_A;
+    struct DPFKeyZ** dpf_keys_B;
+    struct PRFKeysZ* prf_keys;
+};
+
 struct Err_Cross_Poly {
     uint8_t *err_poly_cross_coef;
     size_t *err_poly_cross_pos;

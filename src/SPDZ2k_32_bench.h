@@ -9,11 +9,11 @@ struct SPDZ2k_32_FFT_A {
     struct GR64 **fft_a;
 };
 
-// product structure
 struct SPDZ2k_32_b {
     // generate keys for b0, b1
     struct Keys *keys_b0;
     struct Keys *keys_b1;
+
     // output for (b0,b1) and each has two values for the trace
     uint64_t *b0_0;
     uint64_t *b0_1;
@@ -25,10 +25,15 @@ struct SPDZ2k_32_b {
     uint64_t *bm1_0;
     uint64_t *bm1_1;
     
+    // all of the DPF evaluation results for b
+    // each is of length 2*c*poly_size
     struct GR64 *polys;
     struct GR64 *poly_buf;
+
+    // for b and K*b with total length 2*poly_size
     struct GR64 *z_poly;
     // Shares and cache for each dpf_block
+    // Each is of length 4*block_size
     uint128_t *shares;
     uint128_t *cache;
 };
@@ -37,23 +42,24 @@ struct SPDZ2k_32_b {
 struct SPDZ2k_32_Prod {
     // keys for z
     struct Keys *keys;
-    // The output for Tr(z) and Tr(z*K)
+    // The output for Tr(z) and Tr(z*K) with length 2*t*t*dpf_block_size=2*poly_size
     uint64_t *rlt0;
-    // The ouput for Tr(zeta*z) and Tr(zeta*z*K)
+    // The output for Tr(zeta*z) and Tr(zeta*z*K) with length 2*t*t*dpf_block_size=2*poly_size
     uint64_t *rlt1;
 
-    // DPF evaluation polynomials
+    // The polynomial for z and z*K with length 2*t*t*dpf_block_size=2*poly_size
+    struct GR64 *z_poly0;
+    // The polynomial for zeta*z and zeta*z*K with length 2*t*t*dpf_block_size=2*poly_size
+    struct GR64 *z_poly1;
+
+    // DPF evaluation polynomials with length 2*2*c*c*t*t*dpf_block_size=2*2*c*c*poly_size
     struct GR64 *polys;
     struct GR64 *poly_buf;
-    // The polynomial for z and z*K
-    struct GR64 *z_poly0;
-    // The polynomial for zeta*z and zeta*z*K
-    struct GR64 *z_poly1;
-    // Shares and cache for each dpf_block
+    
+    // Shares and cache for each dpf_block with length 2*2*dpf_block_size
     uint128_t *shares;
     uint128_t *cache;
 };
-
 
 void SPDZ2k_32_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
 
@@ -69,7 +75,7 @@ void convert_SPDZ2k_32_b_to_FFT(const struct Param *param, struct GR64 *polys);
 void multiply_SPDZ2k_32_b_FFT(const struct Param *param, struct GR64 **a_polys, const struct GR64 *b_poly, struct GR64 *res_poly);
 void sum_SPDZ2k_32_b_FFT_polys(const struct Param *param, struct GR64 *poly_buf, struct GR64 *z_poly);
 
-void evaluate_SPDZ_32_b_DPF_and_sum(
+void evaluate_SPDZ2k_32_b_DPF_and_sum(
     const struct Param *param,
     const struct Keys *keys,
     struct GR64 **fft_a,

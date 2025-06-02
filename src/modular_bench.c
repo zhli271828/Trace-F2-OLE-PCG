@@ -17,10 +17,22 @@
 void init_SPDZ2k_32_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
     param->k = k;
     param->s = s;
+    // It is incorrect for 2^64
     param->modulus64 = 1<<(k+s);
     RAND_bytes((uint8_t *)&param->K64, sizeof(param->K64));
     param->K64 = param->K64%param->modulus64;
     init_gr64_bench_params(param, n, c, t, m);
+}
+
+void init_SPDZ2k_32_HD_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
+    param->k = k;
+    param->s = s;
+    param->modulus64 = 1<<(k+s);
+    RAND_bytes((uint8_t *)&param->K64, sizeof(param->K64));
+    if (param->modulus64 != 0) {
+        param->K64 = param->K64%param->modulus64;
+    }
+    init_gr_HD_bench_params(param, n, c, t, m);
 }
 
 void init_SPDZ2k_64_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
@@ -55,6 +67,36 @@ void init_gr_bench_params(struct Param *param, const size_t n, const size_t c, c
     printf("dpf_block_size = %zu\n", dpf_block_size);
     size_t block_bits = (size_t)(log_base(poly_size/t, 3));
     printf("block_bits = %zu\n", block_bits);
+    param->poly_size = poly_size;
+    param->block_size = block_size;
+    param->dpf_block_size = dpf_block_size;
+    param->dpf_domain_bits = dpf_domain_bits;
+    param->block_bits = block_bits;
+}
+
+// for GR64 and GR128 and higher degree
+void init_gr_HD_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m) {
+
+    param->n=n;
+    param->c=c;
+    param->t=t;
+    param->m=m;
+    size_t base = (1<<m)-1;
+    param->base = base;
+    size_t poly_size = ipow(base, n);
+
+    // For single DPF, each is t-regular.
+    size_t block_size = ceil(poly_size / t);
+    printf("block_size = %zu \n", block_size);
+    size_t block_bits = (size_t)(log_base(poly_size/t, base));
+    printf("block_bits = %zu\n", block_bits);
+
+    // For product DPF, each is t^2-regular.
+    size_t dpf_domain_bits = (size_t)(log_base(poly_size / (t*t), base));
+    printf("DPF domain bits %zu \n", dpf_domain_bits);
+    size_t dpf_block_size = ipow(base, dpf_domain_bits);
+    printf("dpf_block_size = %zu\n", dpf_block_size);
+
     param->poly_size = poly_size;
     param->block_size = block_size;
     param->dpf_block_size = dpf_block_size;
