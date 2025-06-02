@@ -460,6 +460,44 @@ void fft_recursive_SPDZ2k_32_D3(
     }
 }
 
+void fft_recursive_SPDZ2k_32_D4(
+    struct GR64_D4 *coeffs,
+    const struct GR64_D4 *zeta_powers,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const uint64_t modulus64,
+    const size_t base
+    ) {
+    if (num_vars > 1) {
+        for (size_t i = 0; i < base; ++i) {
+            // apply FFT on each branch
+            fft_recursive_SPDZ2k_32_D4(&coeffs[i * num_coeffs], zeta_powers, num_vars-1, num_coeffs/base, modulus64, base);
+        }
+    }
+    // temp variables to store intermediate values
+    struct GR64_D4 mult;
+    struct GR64_D4 *coeffs_pos[base];
+    for (size_t i = 0; i < base; ++i) {
+        coeffs_pos[i] = &coeffs[i*num_coeffs];
+    }
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        struct GR64_D4 t_coeffs[base];
+        memset(t_coeffs, 0, base*sizeof(struct GR64_D4));
+        // compute the first base-1 evaluations and store to t_coeffs
+        // coeffs_pos[0...base-1][j] is the coefficients
+        for (size_t k = 0; k < base; ++k) {
+            for (size_t i = 0; i < base; ++i) {
+                mult_gr64_D4(&coeffs_pos[i][j], &zeta_powers[k*i%base], &mult);
+                add_gr64_D4(&mult, &t_coeffs[k], &t_coeffs[k]);
+            }
+        }
+        // copy temp to the value back
+        for (size_t i = 0; i < base; ++i) {
+            memcpy(&coeffs_pos[i][j], &t_coeffs[i], sizeof(struct GR64_D4));
+        }
+    }
+}
 void fft_recursive_SPDZ2k_64(
     struct GR128 *coeffs,
     const size_t num_vars,

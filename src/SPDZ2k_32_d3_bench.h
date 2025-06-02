@@ -9,15 +9,6 @@ struct SDPZ2k_32_D3_FFT_A {
     struct GR64_D3 **fft_a;
 };
 
-struct SDPZ2k_32_D4_FFT_A {
-    // length c*poly_size for a
-    struct GR64_D4 **fft_a;
-};
-
-struct SDPZ2k_32_HD_FFT_A {
-    // length c*poly_size for a
-    struct GR64_HD **fft_a;
-};
 
 /**
  * The structure for (b0, b1) and authenticated (b0, b1).
@@ -158,6 +149,7 @@ void trace_SPDZ2k_32_d3_prod_FFT_polys(const struct Param *param, struct GR64_D3
 void compute_Frob_gr64_d3(const struct GR64_D3 *prev, struct GR64_D3 *cur);
 
 static inline uint64_t trace_GR64_d3(const struct GR64_D3* z, const size_t m) {
+    // use primitive polynomial: X^3 + 17520588382079786918*X^2 + 17520588382079786917*X + 18446744073709551615
     const static uint64_t a = 17520588382079786918UL;
     return m*z->c0-(z->c1+z->c2)*a;
 }

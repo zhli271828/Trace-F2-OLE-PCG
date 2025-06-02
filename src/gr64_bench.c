@@ -139,9 +139,16 @@ void add_gr64_D3(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D
     t->c2 = a->c2 + b->c2;
 }
 
+void add_gr64_D4(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_D4 *t) {
+    t->c0 = a->c0 + b->c0;
+    t->c1 = a->c1 + b->c1;
+    t->c2 = a->c2 + b->c2;
+    t->c3 = a->c3 + b->c3;
+}
+
 // Multiply two degree 3 GR64 elements mod X^3 + 17520588382079786918*X^2 + 17520588382079786917*X - 1
 void mult_gr64_D3(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
-// Modulus: X^3 + aX^2 + bX - 1
+// Modulus: X^3 + AX^2 + BX - 1
     const static uint64_t A = 17520588382079786918ULL;
     const static uint64_t B = 17520588382079786917ULL;
 
@@ -183,9 +190,60 @@ void mult_gr64_D3_list(const struct GR64_D3 *a, const struct GR64_D3 *b, struct 
     }
 }
 
-void mult_gr64_D4(const struct GR64_D4 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
-    printf("Not implemented function mult_gr64_D4");
+// Multiply two degree 4 GR64 elements mod X^4 + 4004063733259641452*X^3 - 2*X^2 - 4004063733259641453*X + 1
+void mult_gr64_D4(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_D4 *t) {
+    // Modulus: X^4 + A·X^3 - 2·X^2 - B·X + 1
+    const uint64_t A = 4004063733259641452UL;
+    const uint64_t B = 4004063733259641453UL;
+    const uint64_t A_ = ~A + 1; // -A mod 2^64
+    const uint64_t B_ = ~B + 1; // -B mod 2^64
+    const uint64_t M1 = ~0ULL; // -1 mod 2^64
+
+    // Schoolbook multiplication (up to degree 6)
+    uint64_t c0 = a->c0 * b->c0;
+    uint64_t c1 = a->c0 * b->c1 + a->c1 * b->c0;
+    uint64_t c2 = a->c0 * b->c2 + a->c1 * b->c1 + a->c2 * b->c0;
+    uint64_t c3 = a->c0 * b->c3 + a->c1 * b->c2 + a->c2 * b->c1 + a->c3 * b->c0;
+    uint64_t c4 = a->c1 * b->c3 + a->c2 * b->c2 + a->c3 * b->c1;
+    uint64_t c5 = a->c2 * b->c3 + a->c3 * b->c2;
+    uint64_t c6 = a->c3 * b->c3;
+
+    // === Reduce c6 · X^6 ===
+    // X^6 = X^2 · X^4 ≡ X^2( -A·X^3 + 2·X^2 + B·X - 1 )
+    //     = -A·X^5 + 2·X^4 + B·X^3 - X^2
+    c2 += c6 * M1;
+    c3 += c6 * B;
+    c4 += c6 * 2;
+    c5 += c6 * A_;
+
+    // === Reduce c5 · X^5 ===
+    // X^5 = X · X^4 ≡ X( -A·X^3 + 2·X^2 + B·X - 1 )
+    //     = -A·X^4 + 2·X^3 + B·X^2 - X
+    c1 += c5 * M1;
+    c2 += c5 * B;
+    c3 += c5 * 2;
+    c4 += c5 * A_;
+
+    // === Reduce c4 · X^4 ===
+    // X^4 ≡ -A·X^3 + 2·X^2 + B·X - 1
+    c0 += c4 * M1;
+    c1 += c4 * B;
+    c2 += c4 * 2;
+    c3 += c4 * A_;
+
+    t->c0 = c0;
+    t->c1 = c1;
+    t->c2 = c2;
+    t->c3 = c3;
 }
+
+// Multiply two degree 4 GR64 list
+void mult_gr64_D4_list(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_D4 *t, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        mult_gr64_D4(&a[i], &b[i], &t[i]);
+    }
+}
+
 // sample c*c*m*t*t DPF keys
 void sample_gr64_DPF_keys(const struct Param *param, struct Keys *keys) {
     size_t c = param->c;

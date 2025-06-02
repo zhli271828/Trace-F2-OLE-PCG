@@ -74,6 +74,20 @@ void init_gr_bench_params(struct Param *param, const size_t n, const size_t c, c
     param->block_bits = block_bits;
 }
 
+size_t find_index(size_t a, size_t base) {
+    size_t prod = 1;
+    for (size_t i = 1; i < 100; ++i) {
+        prod = prod*base;
+        if (prod == a) {
+            return i;
+        }
+        if (prod > a) {
+            printf("find_index out of range\n");
+            exit(-1);
+        }
+    }
+}
+
 // for GR64 and GR128 and higher degree
 void init_gr_HD_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m) {
 
@@ -87,12 +101,14 @@ void init_gr_HD_bench_params(struct Param *param, const size_t n, const size_t c
 
     // For single DPF, each is t-regular.
     size_t block_size = ceil(poly_size / t);
-    printf("block_size = %zu \n", block_size);
-    size_t block_bits = (size_t)(log_base(poly_size/t, base));
+    printf("block_size = %zu\n", block_size);
+    // size_t block_bits = (size_t)(log_base(poly_size/t, base));
+    size_t block_bits = find_index(poly_size/t, base);
     printf("block_bits = %zu\n", block_bits);
 
     // For product DPF, each is t^2-regular.
-    size_t dpf_domain_bits = (size_t)(log_base(poly_size / (t*t), base));
+    // size_t dpf_domain_bits = (size_t)(log_base(poly_size / (t*t), base));
+    size_t dpf_domain_bits = (size_t)find_index(poly_size / t / t, base);
     printf("DPF domain bits %zu \n", dpf_domain_bits);
     size_t dpf_block_size = ipow(base, dpf_domain_bits);
     printf("dpf_block_size = %zu\n", dpf_block_size);

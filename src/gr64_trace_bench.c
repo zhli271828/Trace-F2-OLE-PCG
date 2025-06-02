@@ -93,6 +93,27 @@ void init_FFT_GR64_d3_Trace_A(const struct Param *param, struct FFT_GR64_D3_Trac
     fft_gr64_d3_trace_a->fft_a_tensor = fft_a_tensor;
 }
 
+
+void init_FFT_GR64_d4_Trace_A(const struct Param *param, struct FFT_GR64_D4_Trace_A *fft_gr64_d4_trace_a) {
+
+    size_t poly_size = param->poly_size;
+    size_t c = param->c;
+    size_t m = param->m;
+    struct GR64_D4 **fft_a = calloc(m*c, sizeof(void*));
+    for (size_t i = 0; i < m*c; ++i) {
+        fft_a[i] = calloc(poly_size, sizeof(struct GR64_D4));
+    }
+
+    struct GR64_D4 **fft_a_tensor = calloc(m*c*c, sizeof(void*));
+    for(size_t i = 0; i < m*c*c; ++i) {
+        // m indicates the automorphisms
+        fft_a_tensor[i] = calloc(m*c*c*poly_size, sizeof(struct GR64_D4));
+    }
+    fft_gr64_d4_trace_a->fft_a = fft_a;
+    fft_gr64_d4_trace_a->fft_a_tensor = fft_a_tensor;
+}
+
+
 void free_FFT_GR64_Trace_A(const struct Param *param, struct FFT_GR64_Trace_A *fft_gr64_trace_a) {
     size_t c = param->c;
 
@@ -132,6 +153,25 @@ void free_FFT_GR64_d3_Trace_A(const struct Param *param, struct FFT_GR64_D3_Trac
     free(fft_gr64_d3_trace_a->fft_a_tensor);
     
     free(fft_gr64_d3_trace_a);
+}
+
+void free_FFT_GR64_d4_Trace_A(const struct Param *param, struct FFT_GR64_D4_Trace_A *fft_gr64_d4_trace_a) {
+    size_t c = param->c;
+    size_t m = param->m;
+
+    for (size_t i = 0; i < m*c; ++i) {
+        free(fft_gr64_d4_trace_a->fft_a[i]);
+    }
+    // Free fft_a
+    free(fft_gr64_d4_trace_a->fft_a);
+
+    // Free the nested arrays in fft_a_tensor
+    for (size_t i = 0; i < c*c*m; ++i) {
+        free(fft_gr64_d4_trace_a->fft_a_tensor[i]);
+    }
+    free(fft_gr64_d4_trace_a->fft_a_tensor);
+    
+    free(fft_gr64_d4_trace_a);
 }
 
 void sample_gr64_trace_a_and_tensor(const struct Param *param, struct FFT_GR64_Trace_A *fft_gr64_trace_a) {

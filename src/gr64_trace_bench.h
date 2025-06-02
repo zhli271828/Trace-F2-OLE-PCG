@@ -24,11 +24,8 @@ struct FFT_GR64_D3_Trace_A {
 struct FFT_GR64_D4_Trace_A {
     // length c*poly_size for a=\sigma^0(a)
     struct GR64_D4 **fft_a;
-    // length c*poly_size for \sigma^1(a)
-    struct GR64_D4 **fft_a_maps;
-    // TODO: change this for degree 3 extension
-    // length c^2*(2*poly_size) for ai*\sigma^0(aj) and ai*\sigma^1(aj)
-    struct GR64_D4 **fft_a_tensor_maps;
+    // length m*m*c*c*poly_size for \sigma^i(a_k)*\sigma^j(a_l)
+    struct GR64_D4 **fft_a_tensor;
 };
 
 // product structure
@@ -51,6 +48,8 @@ void free_FFT_GR64_Trace_A(const struct Param *param, struct FFT_GR64_Trace_A *f
 
 void init_FFT_GR64_d3_Trace_A(const struct Param *param, struct FFT_GR64_D3_Trace_A *fft_gr64_d3_trace_a);
 void free_FFT_GR64_d3_Trace_A(const struct Param *param, struct FFT_GR64_D3_Trace_A *fft_gr64_d3_trace_a);
+void init_FFT_GR64_d4_Trace_A(const struct Param *param, struct FFT_GR64_D4_Trace_A *fft_gr64_d4_trace_a);
+void free_FFT_GR64_d4_Trace_A(const struct Param *param, struct FFT_GR64_D4_Trace_A *fft_gr64_d3_trace_a);
 
 void sample_gr64_trace_a_and_tensor(const struct Param *param, struct FFT_GR64_Trace_A *fft_gr64_trace_a);
 

@@ -19,4 +19,6 @@ void init_gr_HD_bench_params(struct Param *param, const size_t n, const size_t c
 
 void sample_DPF_keys(const struct Param* param, struct Keys *keys);
 void modular_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
+
+size_t find_index(size_t a, size_t base);
 #endif

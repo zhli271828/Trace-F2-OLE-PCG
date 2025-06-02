@@ -14,6 +14,7 @@
 #include "gr128_trace_bench.h"
 #include "SPDZ2k_32_bench.h"
 #include "SPDZ2k_32_d3_bench.h"
+#include "SPDZ2k_32_d4_bench.h"
 #include "SPDZ2k_64_bench.h"
 #include "common.h"
 
@@ -32,6 +33,7 @@ void printUsage() {
     printf("  --SPDZ2k_32_bench\tTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --SPDZ2k_64_bench\tTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --SPDZ2k_32_D3_bench\tTraceBenchmarks the PCG on degree 3 Galois rings.\n");
+    printf("  --SPDZ2k_32_D4_bench\tTraceBenchmarks the PCG on degree 4 Galois rings.\n");
     printf("  --mal_64_trace_bench\tMaliciousTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --mal_128_trace_bench\tMaliciousTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     
@@ -97,15 +99,42 @@ void pcg_bm_d3_with_param(int num_trials, bench_func bf) {
 
     printf("******************************************\n");
     size_t base = 7;
-    size_t c = 3;
+    size_t c = 2;
     size_t t = 49;
-
     size_t n = 7;
-    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+
+    printf("Benchmarking PCG with parameters (c=%zu, t=%zu)\n", c, t);
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 8;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    printf("******************************************\n");
+
+    c = 3;
+    printf("Benchmarking PCG with parameters (c=%zu, t=%zu)\n", c, t);
+    n = 7;
     run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
     n = 8;
     run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
     n = 9;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    printf("******************************************\n");
+}
+
+void pcg_bm_d4_with_param(int num_trials, bench_func bf) {
+
+    printf("******************************************\n");
+    size_t base = 15;
+    size_t c = 6;
+    size_t t = 15;
+
+    size_t n = 4;
+    printf("Benchmarking PCG with parameters (c=%zu, t=%zu)\n", c, t);
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 5;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 6;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 7;
     run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
     printf("******************************************\n");
 }
@@ -147,6 +176,8 @@ int main(int argc, char **argv)
             pcg_bm_with_param(num_trials, SPDZ2k_64_bench_pcg);
         } else if (strcmp(argv[i], "--SPDZ2k_32_D3_bench") == 0) {
             pcg_bm_d3_with_param(num_trials, SPDZ2k_32_D3_bench_pcg);
+        } else if (strcmp(argv[i], "--SPDZ2k_32_D4_bench") == 0) {
+            pcg_bm_d4_with_param(num_trials, SPDZ2k_32_D4_bench_pcg);
         }
         else if (strcmp(argv[i], "--mal_128_trace_bench") == 0) {
             pcg_bm_with_param(num_trials, mal_gf128_trace_bench_pcg);
