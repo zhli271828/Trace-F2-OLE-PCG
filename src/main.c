@@ -103,6 +103,10 @@ void pcg_bm_d3_with_param(int num_trials, bench_func bf) {
     size_t n = 7;
     printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
     run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 8;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
+    n = 9;
+    run_hd_pcg_benchmarks(base, n, c, t, num_trials, bf);
     printf("******************************************\n");
 }
 
