@@ -8,6 +8,22 @@ struct GR128 {
     uint128_t c0;
     uint128_t c1;
 };
+
+// extension degree 3
+struct GR128_D3 {
+    uint128_t c0;
+    uint128_t c1;
+    uint128_t c2;
+};
+
+// extension degree 4
+struct GR128_D4 {
+    uint128_t c0;
+    uint128_t c1;
+    uint128_t c2;
+    uint128_t c3;
+};
+
 struct FFT_GR128_A {
     // length c*poly_size for a
     struct GR128 **fft_a;
@@ -38,5 +54,11 @@ void multiply_gr128_FFT(const struct Param *param, struct GR128 **a_polys, const
 
 void sum_gr128_FFT_polys(const struct Param *param, struct GR128 *poly_buf, struct GR128 *z_poly);
 void sum_gr128_FFT_polys_special(const struct Param *param, struct GR128 *poly_buf, struct GR128 *z_poly);
+
+void add_gr128_D3(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t);
+void mult_gr128_D3(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t);
+// Multiply two degree 3 GR128 list
+void mult_gr128_D3_list(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t, size_t len);
+
 
 #endif

@@ -160,3 +160,80 @@ void trace_gr128_FFT_polys(const struct Param *param, const struct GR128 *src, u
         rlt[i] = 2*src[i].c0-src[i].c1;
     }
 }
+
+void init_FFT_GR128_d3_Trace_A(const struct Param *param, struct FFT_GR128_D3_Trace_A *fft_gr128_d3_trace_a) {
+
+    size_t poly_size = param->poly_size;
+    size_t c = param->c;
+    size_t m = param->m;
+    struct GR128_D3 **fft_a = calloc(m*c, sizeof(void*));
+    for (size_t i = 0; i < m*c; ++i) {
+        fft_a[i] = calloc(poly_size, sizeof(struct GR128_D3));
+    }
+
+    struct GR128_D3 **fft_a_tensor = calloc(m*c*c, sizeof(void*));
+    for(size_t i = 0; i < m*c*c; ++i) {
+        // m indicates the automorphisms
+        fft_a_tensor[i] = calloc(m*c*c*poly_size, sizeof(struct GR128_D3));
+    }
+    fft_gr128_d3_trace_a->fft_a = fft_a;
+    fft_gr128_d3_trace_a->fft_a_tensor = fft_a_tensor;
+}
+
+
+void init_FFT_GR128_d4_Trace_A(const struct Param *param, struct FFT_GR128_D4_Trace_A *fft_gr128_d4_trace_a) {
+
+    size_t poly_size = param->poly_size;
+    size_t c = param->c;
+    size_t m = param->m;
+    struct GR128_D4 **fft_a = calloc(m*c, sizeof(void*));
+    for (size_t i = 0; i < m*c; ++i) {
+        fft_a[i] = calloc(poly_size, sizeof(struct GR128_D4));
+    }
+
+    struct GR128_D4 **fft_a_tensor = calloc(m*c*c, sizeof(void*));
+    for(size_t i = 0; i < m*c*c; ++i) {
+        // m indicates the automorphisms
+        fft_a_tensor[i] = calloc(m*c*c*poly_size, sizeof(struct GR128_D4));
+    }
+    fft_gr128_d4_trace_a->fft_a = fft_a;
+    fft_gr128_d4_trace_a->fft_a_tensor = fft_a_tensor;
+}
+
+void free_FFT_GR128_d3_Trace_A(const struct Param *param, struct FFT_GR128_D3_Trace_A *fft_gr128_d3_trace_a) {
+    size_t c = param->c;
+    size_t m = param->m;
+
+    for (size_t i = 0; i < m*c; ++i) {
+        free(fft_gr128_d3_trace_a->fft_a[i]);
+    }
+    // Free fft_a
+    free(fft_gr128_d3_trace_a->fft_a);
+
+    // Free the nested arrays in fft_a_tensor
+    for (size_t i = 0; i < c*c*m; ++i) {
+        free(fft_gr128_d3_trace_a->fft_a_tensor[i]);
+    }
+    free(fft_gr128_d3_trace_a->fft_a_tensor);
+    
+    free(fft_gr128_d3_trace_a);
+}
+
+void free_FFT_GR128_d4_Trace_A(const struct Param *param, struct FFT_GR128_D4_Trace_A *fft_gr128_d4_trace_a) {
+    size_t c = param->c;
+    size_t m = param->m;
+
+    for (size_t i = 0; i < m*c; ++i) {
+        free(fft_gr128_d4_trace_a->fft_a[i]);
+    }
+    // Free fft_a
+    free(fft_gr128_d4_trace_a->fft_a);
+
+    // Free the nested arrays in fft_a_tensor
+    for (size_t i = 0; i < c*c*m; ++i) {
+        free(fft_gr128_d4_trace_a->fft_a_tensor[i]);
+    }
+    free(fft_gr128_d4_trace_a->fft_a_tensor);
+    
+    free(fft_gr128_d4_trace_a);
+}

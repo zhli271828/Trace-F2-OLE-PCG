@@ -307,3 +307,54 @@ void copy_gr128_block(struct GR128 *poly_block, uint128_t *shares, const size_t 
         poly_block[w].c1 = shares[w*2+1];
     }
 }
+
+
+void add_gr128_D3(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t) {
+    t->c0 = a->c0 + b->c0;
+    t->c1 = a->c1 + b->c1;
+    t->c2 = a->c2 + b->c2;
+}
+
+// Multiply two degree 3 GR128 elements mod X^3 + 184612259339076664511367859069250674598*X^2 + 184612259339076664511367859069250674597*X - 1
+void mult_gr128_D3(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t) {
+// Modulus: X^3 + AX^2 + BX - 1
+    const static uint128_t A = 184612259339076664511367859069250674598ULL;
+    const static uint128_t B = 184612259339076664511367859069250674597ULL;
+
+    // Compute negative coefficients modulo 2^128
+    const static uint128_t A_ = ~A + 1; // -A mod 2^128
+    const static uint128_t B_ = ~B + 1; // -B mod 2^128
+
+    // Intermediate products (up to degree 4)
+    uint128_t c0 = a->c0 * b->c0;
+    uint128_t c1 = a->c0 * b->c1 + a->c1 * b->c0;
+    uint128_t c2 = a->c0 * b->c2 + a->c1 * b->c1 + a->c2 * b->c0;
+    uint128_t c3 = a->c1 * b->c2 + a->c2 * b->c1;
+    uint128_t c4 = a->c2 * b->c2;
+
+    // Reduce c4 (X^4)
+    // X^4 ≡ -X^2 - X + A_ mod f
+    uint128_t r4_c2 = -1;
+    uint128_t r4_c1 = -1;
+    uint128_t r4_c0 = A_;
+
+    c0 += c4 * r4_c0;
+    c1 += c4 * r4_c1;
+    c2 += c4 * r4_c2;
+
+    // Reduce c3 (X^3 ≡ A_*X^2 + B_*X + 1)
+    c0 += c3;
+    c1 += c3 * B_;
+    c2 += c3 * A_;
+
+    t->c0 = c0;
+    t->c1 = c1;
+    t->c2 = c2;
+}
+
+// Multiply two degree 3 GR128 arrays
+void mult_gr128_D3_list(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        mult_gr128_D3(&a[i], &b[i], &t[i]);
+    }
+}

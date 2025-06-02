@@ -98,6 +98,15 @@ void fft_recursive_SPDZ2k_32_D3(
     const size_t base
     );
 
+void fft_recursive_SPDZ2k_64_D3(
+    struct GR128_D3 *coeffs,
+    const struct GR128_D3 *zeta_powers,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const uint128_t modulus128,
+    const size_t base
+    );
+
 void fft_recursive_SPDZ2k_32_D4(
     struct GR64_D4 *coeffs,
     const struct GR64_D4 *zeta_powers,

@@ -35,6 +35,17 @@ void init_SPDZ2k_32_HD_bench_params(struct Param* param, const size_t n, const s
     init_gr_HD_bench_params(param, n, c, t, m);
 }
 
+void init_SPDZ2k_64_HD_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
+    param->k = k;
+    param->s = s;
+    param->modulus128 = 1<<(k+s);
+    RAND_bytes((uint8_t *)&param->K128, sizeof(param->K128));
+    if (param->modulus128 != 0) {
+        param->K128 = param->K128%param->modulus128;
+    }
+    init_gr_HD_bench_params(param, n, c, t, m);
+}
+
 void init_SPDZ2k_64_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s) {
     param->k = k;
     param->s = s;

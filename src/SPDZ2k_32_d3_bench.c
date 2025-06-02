@@ -799,12 +799,7 @@ void sample_SPDZ2k_32_d3_a_and_tensor(const struct Param *param, struct FFT_GR64
         fft_a[0][i].c1 = 0;
         fft_a[0][i].c2 = 0;
     }
-
-    /**
-     * Iteratively compute generalized Frobenius automorphism
-     */
-    // use primitive polynomial: X^3 + 17520588382079786918*X^2 + 17520588382079786917*X + 18446744073709551615
-    const static uint64_t a = 17520588382079786918UL;
+    
     for (size_t i = 1; i < m; ++i) {
         for (size_t j = 0; j < c; ++j) {
             for (size_t k = 0; k < poly_size; ++k) {
@@ -826,7 +821,7 @@ void sample_SPDZ2k_32_d3_a_and_tensor(const struct Param *param, struct FFT_GR64
 }
 
 void compute_Frob_gr64_d3(const struct GR64_D3 *prev, struct GR64_D3 *cur) {
-    // use primitive polynomial: X^3 + 17520588382079786918*X^2 + 17520588382079786917*X + 18446744073709551615
+    // use primitive polynomial: X^3 + 17520588382079786918*X^2 + 17520588382079786917*X - 1
     const static uint64_t a = 17520588382079786918UL;
     cur->c0 = prev->c0-prev->c2*a;
     cur->c1 = -prev->c2;

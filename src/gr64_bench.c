@@ -149,8 +149,8 @@ void add_gr64_D4(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_D
 // Multiply two degree 3 GR64 elements mod X^3 + 17520588382079786918*X^2 + 17520588382079786917*X - 1
 void mult_gr64_D3(const struct GR64_D3 *a, const struct GR64_D3 *b, struct GR64_D3 *t) {
 // Modulus: X^3 + AX^2 + BX - 1
-    const static uint64_t A = 17520588382079786918ULL;
-    const static uint64_t B = 17520588382079786917ULL;
+    const static uint64_t A = 17520588382079786918UL;
+    const static uint64_t B = 17520588382079786917UL;
 
     // Compute negative coefficients modulo 2^64
     const static uint64_t A_ = ~A + 1; // -A mod 2^64
@@ -197,7 +197,7 @@ void mult_gr64_D4(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_
     const uint64_t B = 4004063733259641453UL;
     const uint64_t A_ = ~A + 1; // -A mod 2^64
     const uint64_t B_ = ~B + 1; // -B mod 2^64
-    const uint64_t M1 = ~0ULL; // -1 mod 2^64
+    const uint64_t M1 = ~0UL; // -1 mod 2^64
 
     // Schoolbook multiplication (up to degree 6)
     uint64_t c0 = a->c0 * b->c0;
