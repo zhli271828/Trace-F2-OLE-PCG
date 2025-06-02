@@ -1,6 +1,9 @@
-[submodule "libs/tri-dpf"]
-	path = libs/tri-dpf
-	url = https://github.com/sachaservan/tri-dpf
+# [submodule "libs/tri-dpf"]
+# 	path = libs/tri-dpf
+# 	url = https://github.com/sachaservan/tri-dpf
+[submodule "libs/base-ary-dpf"]
+	path = libs/base-ary-dpf
+	url = https://github.com/zhli271828/base-ary-dpf
 [submodule "scripts/parameters_estimation"]
 	path = scripts/parameters_selection
 	url = https://github.com/mbombar/estimator_folding.git
