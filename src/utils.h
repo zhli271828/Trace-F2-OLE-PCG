@@ -13,7 +13,7 @@ typedef unsigned __int128 uint128_t;
 static void *xcalloc(size_t num, size_t size) {
     void *p = calloc(num, size);
     if (p == NULL) {
-        printf("Calloic FAILS\n");
+        printf("Calloc FAILS\n");
         exit(-1);
     }
     return p;

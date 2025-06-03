@@ -358,3 +358,64 @@ void mult_gr128_D3_list(const struct GR128_D3 *a, const struct GR128_D3 *b, stru
         mult_gr128_D3(&a[i], &b[i], &t[i]);
     }
 }
+
+// Multiply two degree 4 GR128 elements mod X^4 + 23254378673668297602512925802836206188*X^3 - 2*X^2 - 23254378673668297602512925802836206189*X + 1
+void mult_gr128_D4(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t) {
+    // Modulus: X^4 + A·X^3 - 2·X^2 - B·X + 1
+    const uint128_t A = 23254378673668297602512925802836206188ULL;
+    const uint128_t B = A+1;
+    const uint128_t A_ = ~A + 1; // -A mod 2^64
+    const uint128_t B_ = ~B + 1; // -B mod 2^64
+    const uint128_t M1 = ~0UL; // -1 mod 2^64
+
+    // Schoolbook multiplication (up to degree 6)
+    uint128_t c0 = a->c0 * b->c0;
+    uint128_t c1 = a->c0 * b->c1 + a->c1 * b->c0;
+    uint128_t c2 = a->c0 * b->c2 + a->c1 * b->c1 + a->c2 * b->c0;
+    uint128_t c3 = a->c0 * b->c3 + a->c1 * b->c2 + a->c2 * b->c1 + a->c3 * b->c0;
+    uint128_t c4 = a->c1 * b->c3 + a->c2 * b->c2 + a->c3 * b->c1;
+    uint128_t c5 = a->c2 * b->c3 + a->c3 * b->c2;
+    uint128_t c6 = a->c3 * b->c3;
+
+    // === Reduce c6 · X^6 ===
+    // X^6 = X^2 · X^4 ≡ X^2( -A·X^3 + 2·X^2 + B·X - 1 )
+    //     = -A·X^5 + 2·X^4 + B·X^3 - X^2
+    c2 += c6 * M1;
+    c3 += c6 * B;
+    c4 += c6 * 2;
+    c5 += c6 * A_;
+
+    // === Reduce c5 · X^5 ===
+    // X^5 = X · X^4 ≡ X( -A·X^3 + 2·X^2 + B·X - 1 )
+    //     = -A·X^4 + 2·X^3 + B·X^2 - X
+    c1 += c5 * M1;
+    c2 += c5 * B;
+    c3 += c5 * 2;
+    c4 += c5 * A_;
+
+    // === Reduce c4 · X^4 ===
+    // X^4 ≡ -A·X^3 + 2·X^2 + B·X - 1
+    c0 += c4 * M1;
+    c1 += c4 * B;
+    c2 += c4 * 2;
+    c3 += c4 * A_;
+
+    t->c0 = c0;
+    t->c1 = c1;
+    t->c2 = c2;
+    t->c3 = c3;
+}
+
+// Multiply two degree 4 GR64 list
+void mult_gr128_D4_list(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t, size_t len) {
+    for (size_t i = 0; i < len; ++i) {
+        mult_gr128_D4(&a[i], &b[i], &t[i]);
+    }
+}
+
+void add_gr128_D4(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t) {
+    t->c0 = a->c0 + b->c0;
+    t->c1 = a->c1 + b->c1;
+    t->c2 = a->c2 + b->c2;
+    t->c3 = a->c3 + b->c3;
+}

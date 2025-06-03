@@ -60,5 +60,9 @@ void mult_gr128_D3(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR
 // Multiply two degree 3 GR128 list
 void mult_gr128_D3_list(const struct GR128_D3 *a, const struct GR128_D3 *b, struct GR128_D3 *t, size_t len);
 
+void add_gr128_D4(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t);
+void mult_gr128_D4_list(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t, size_t len);
+void mult_gr128_D4(const struct GR128_D4 *a, const struct GR128_D4 *b, struct GR128_D4 *t);
+
 
 #endif

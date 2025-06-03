@@ -77,18 +77,18 @@ void init_FFT_GR128_Trace_A(const struct Param *param, struct FFT_GR128_Trace_A 
     size_t poly_size = param->poly_size;
     size_t c = param->c;
     size_t m = param->m;
-    struct GR128 **fft_a = calloc(c, sizeof(void*));
+    struct GR128 **fft_a = xcalloc(c, sizeof(void*));
     for (size_t i = 0; i < c; ++i) {
         fft_a[i] = calloc(poly_size, sizeof(struct GR128));
     }
-    struct GR128 **fft_a_maps = calloc(c, sizeof(void*));
+    struct GR128 **fft_a_maps = xcalloc(c, sizeof(void*));
     for (size_t i = 0; i < c; ++i) {
-        fft_a_maps[i] = calloc(poly_size, sizeof(struct GR128));
+        fft_a_maps[i] = xcalloc(poly_size, sizeof(struct GR128));
     }
 
-    struct GR128 **fft_a_tensor_maps = calloc(c*c, sizeof(void*));
+    struct GR128 **fft_a_tensor_maps = xcalloc(c*c, sizeof(void*));
     for(size_t i = 0; i < c*c; ++i) {
-        fft_a_tensor_maps[i] = calloc(m*poly_size, sizeof(struct GR128));
+        fft_a_tensor_maps[i] = xcalloc(m*poly_size, sizeof(struct GR128));
     }
 
     fft_gr128_trace_a->fft_a = fft_a;
@@ -166,15 +166,15 @@ void init_FFT_GR128_d3_Trace_A(const struct Param *param, struct FFT_GR128_D3_Tr
     size_t poly_size = param->poly_size;
     size_t c = param->c;
     size_t m = param->m;
-    struct GR128_D3 **fft_a = calloc(m*c, sizeof(void*));
+    struct GR128_D3 **fft_a = xcalloc(m*c, sizeof(void*));
     for (size_t i = 0; i < m*c; ++i) {
-        fft_a[i] = calloc(poly_size, sizeof(struct GR128_D3));
+        fft_a[i] = xcalloc(poly_size, sizeof(struct GR128_D3));
     }
 
     struct GR128_D3 **fft_a_tensor = calloc(m*c*c, sizeof(void*));
     for(size_t i = 0; i < m*c*c; ++i) {
         // m indicates the automorphisms
-        fft_a_tensor[i] = calloc(m*c*c*poly_size, sizeof(struct GR128_D3));
+        fft_a_tensor[i] = xcalloc(m*c*c*poly_size, sizeof(struct GR128_D3));
     }
     fft_gr128_d3_trace_a->fft_a = fft_a;
     fft_gr128_d3_trace_a->fft_a_tensor = fft_a_tensor;
@@ -186,15 +186,15 @@ void init_FFT_GR128_d4_Trace_A(const struct Param *param, struct FFT_GR128_D4_Tr
     size_t poly_size = param->poly_size;
     size_t c = param->c;
     size_t m = param->m;
-    struct GR128_D4 **fft_a = calloc(m*c, sizeof(void*));
+    struct GR128_D4 **fft_a = xcalloc(m*c, sizeof(void*));
     for (size_t i = 0; i < m*c; ++i) {
-        fft_a[i] = calloc(poly_size, sizeof(struct GR128_D4));
+        fft_a[i] = xcalloc(poly_size, sizeof(struct GR128_D4));
     }
 
     struct GR128_D4 **fft_a_tensor = calloc(m*c*c, sizeof(void*));
     for(size_t i = 0; i < m*c*c; ++i) {
         // m indicates the automorphisms
-        fft_a_tensor[i] = calloc(m*c*c*poly_size, sizeof(struct GR128_D4));
+        fft_a_tensor[i] = xcalloc(m*c*c*poly_size, sizeof(struct GR128_D4));
     }
     fft_gr128_d4_trace_a->fft_a = fft_a;
     fft_gr128_d4_trace_a->fft_a_tensor = fft_a_tensor;

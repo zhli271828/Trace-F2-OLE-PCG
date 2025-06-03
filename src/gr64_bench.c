@@ -194,7 +194,7 @@ void mult_gr64_D3_list(const struct GR64_D3 *a, const struct GR64_D3 *b, struct 
 void mult_gr64_D4(const struct GR64_D4 *a, const struct GR64_D4 *b, struct GR64_D4 *t) {
     // Modulus: X^4 + A·X^3 - 2·X^2 - B·X + 1
     const uint64_t A = 4004063733259641452UL;
-    const uint64_t B = 4004063733259641453UL;
+    const uint64_t B = A+1;
     const uint64_t A_ = ~A + 1; // -A mod 2^64
     const uint64_t B_ = ~B + 1; // -B mod 2^64
     const uint64_t M1 = ~0UL; // -1 mod 2^64

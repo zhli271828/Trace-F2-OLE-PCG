@@ -16,6 +16,7 @@
 #include "SPDZ2k_32_d3_bench.h"
 #include "SPDZ2k_32_d4_bench.h"
 #include "SPDZ2k_64_d3_bench.h"
+#include "SPDZ2k_64_d4_bench.h"
 #include "SPDZ2k_64_bench.h"
 #include "common.h"
 
@@ -33,8 +34,10 @@ void printUsage() {
     printf("  --gr128_trace_bench\tTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --SPDZ2k_32_bench\tTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --SPDZ2k_64_bench\tTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
-    printf("  --SPDZ2k_32_D3_bench\tTraceBenchmarks the PCG on degree 3 Galois rings.\n");
-    printf("  --SPDZ2k_32_D4_bench\tTraceBenchmarks the PCG on degree 4 Galois rings.\n");
+    printf("  --SPDZ2k_32_D3_bench\tTraceBenchmarks the SPDZ2k_32 PCG on degree 3 Galois rings.\n");
+    printf("  --SPDZ2k_32_D4_bench\tTraceBenchmarks the SPDZ2k_32 PCG on degree 4 Galois rings.\n");
+    printf("  --SPDZ2k_64_D3_bench\tTraceBenchmarks the SPDZ2k_64 PCG on degree 3 Galois rings.\n");
+    printf("  --SPDZ2k_64_D4_bench\tTraceBenchmarks the SPDZ2k_64 PCG on degree 4 Galois rings.\n");
     printf("  --mal_64_trace_bench\tMaliciousTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     printf("  --mal_128_trace_bench\tMaliciousTraceBenchmarks the PCG on conservative and aggressive parameters.\n");
     
@@ -221,6 +224,8 @@ int main(int argc, char **argv)
             pcg_bm_64_d3_with_param(num_trials, SPDZ2k_64_D3_bench_pcg);
         } else if (strcmp(argv[i], "--SPDZ2k_32_D4_bench") == 0) {
             pcg_bm_32_d4_with_param(num_trials, SPDZ2k_32_D4_bench_pcg);
+        } else if (strcmp(argv[i], "--SPDZ2k_64_D4_bench") == 0) {
+            pcg_bm_64_d4_with_param(num_trials, SPDZ2k_64_D4_bench_pcg);
         }
         else if (strcmp(argv[i], "--mal_128_trace_bench") == 0) {
             pcg_bm_with_param(num_trials, mal_gf128_trace_bench_pcg);

@@ -822,15 +822,14 @@ void sample_SPDZ2k_32_d4_a_and_tensor(const struct Param *param, struct FFT_GR64
 
 void compute_Frob_gr64_d4(const struct GR64_D4 *prev, struct GR64_D4 *cur) {
 
-    // TODO: optimize the code via the primitive polynomial
-
     // use primitive polynomial: X^4 + 4004063733259641452*X^3 - 2*X^2 - 4004063733259641453*X + 1
     // X^4: -4004063733259641452*X^3 + 2*X^2 + 4004063733259641453*X - 1
     // X^6: -3*X^3 - 8008127466519282905*X^2 - 4004063733259641450*X + 4004063733259641454
-    const static uint64_t a = 17520588382079786918UL;
-    cur->c0 = prev->c0 + prev->c2 * (-1) + 4004063733259641454UL * prev->c3;
-    cur->c1 = prev->c2 * 4004063733259641453UL + prev->c3 * (-4004063733259641450UL);
-    cur->c2 = prev->c1 + prev->c2 * 2 + prev->c3 * (-8008127466519282905UL);
-    cur->c3 = prev->c2 * (-4004063733259641452UL) + prev->c3 * (-3);
-
+    const static uint64_t a = 4004063733259641452UL;
+    const static uint64_t b = -2UL;
+    const static uint64_t c = -(a+1);
+    cur->c0 = prev->c0 - prev->c2 * + (a+2) * prev->c3;
+    cur->c1 = prev->c2 * (a+1) - prev->c3 * (a-2);
+    cur->c2 = prev->c1 + prev->c2 * 2 + prev->c3 * (2*c+1);
+    cur->c3 = prev->c2 * (-a) - 3 * prev->c3;
 }
