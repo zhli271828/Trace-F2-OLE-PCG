@@ -3,6 +3,13 @@
 A prototype implementation of the Pseudorandom Correlation Generator (PCG) for OLE and authenticated multiplication triples over $\mathbb{F}_2$ and ${Z}_{2^k}$ in C following the [paper](https://eprint.iacr.org/2025/169). The paper for ring will come soon on eprint.
 It is a secondary development based on the implementation of [$\mathbb{F}_4$ OLEAGE](https://github.com/sachaservan/FOLEAGE-PCG/).
 
+## ⚠️ Important Warning
+
+Very recently, a [paper](https://eprint.iacr.org/2025/892) showed that the QA-SD problem with parameter $(c=3, t=27, q=4, n=16)$ is insecure. To make the attack infeasible, the paper proposed to use parameter satisfying $n\le \frac{(c-1)(q-1)\log{q}}{\log{(q-1)}}+1$. Some example parameter sets include $(c=5,t=27,q=4,n\le16)$, $(c=9,t=9,q=4,n\le31)$, $(c=3, t=49, q=8, n\le15)$ and $(c=6, t=15, q=16, n\le77)$. Among these, we recommend the parameter set $(c=5,t=27,q=4,n\le16)$, because it is only approximately $2.75\times$ slower on our machine compared to the previous used parameter $(c=3,t=27,q=4)$.
+
+<b>This implementation is intended for _research purposes only_. The code has NOT been reviewed by security experts.
+As such, no portion of the code should be used in any real-world or production setting!</b>
+
 ## Organization
 The [libs/gf64](libs/gf64) and [libs/gf128](libs/gf128) folders contains the implementations of operations over $\mathbb{F}_{2^{64}}$ and $\mathbb{F}_{2^{128}}$, respectively.
 The [src/](src/) folder contains the code for benchmark tests.
@@ -74,9 +81,3 @@ TODOs are left in-line, however, the broad strokes include:
 - [ ] Merge the codes of [src/gr64_trace_bench.c](src/gr64_trace_bench.c) and [src/gr6128_trace_bench.c](src/gr6128_trace_bench.c).
 - [ ] Merge the codes of [src/SPDZ2k_32_bench.c](src/SPDZ2k_32_bench.c) and [src/SPDZ2k_64_bench.c](src/SPDZ2k_32_bench.c).
 
-## ⚠️ Important Warning
-
-Very recently, a [paper](https://eprint.iacr.org/2025/892) showed that the QA-SD problem with parameter $(c=3, t=27, q=4, n=16)$ is insecure. To make the attack infeasible, the paper proposed to use parameter satisfying $c\ge 1+(n-1)/(q-1)$. Here are some example parameters $(c=9,t=9,q=4,n<=25)$, $(c=3, t=49, q=8, n<=15)$ or $(c=6, t=15, q=16, n<=76)$.
-
-<b>This implementation is intended for _research purposes only_. The code has NOT been reviewed by security experts.
-As such, no portion of the code should be used in any real-world or production setting!</b>
