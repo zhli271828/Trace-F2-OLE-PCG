@@ -56,7 +56,7 @@ void SPDZ2k_32_D3_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_t
 
     /**
      * 1 init the memory and DPF for b
-     * 2 init the memory  and DPF for product
+     * 2 init the memory and DPF for product
      * 3 run the DPF evaluation
      */
     struct SPDZ2k_32_D3_b *spdz2k_32_d3_b = xcalloc(1, sizeof(struct SPDZ2k_32_D3_b));

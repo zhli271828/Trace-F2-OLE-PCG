@@ -36,7 +36,7 @@ void sample_f4_trace_a_and_tensor(const struct Param *param, struct FFT_F4_Trace
 void free_fft_f4_trace_a(const struct Param *param, struct FFT_F4_Trace_A *fft_f4_trace_a);
 
 void init_f4_trace_prod(const struct Param *param, struct F4_Trace_Prod *prod);
-void run_f4_trace_prod(const struct Param *param, struct F4_Trace_Prod *f4_trace_prod, uint32_t *fft_a_tensor);
+void run_f4_trace_prod(const struct Param *param, struct F4_Trace_Prod *f4_trace_prod, uint32_t *fft_a_tensor, const uint8_t *f4_tr_tbl, const uint8_t *f4_zeta_powers);
 void free_f4_trace_prod(const struct Param *param, struct F4_Trace_Prod *f4_trace_prod);
 
 void sample_f4_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys);
@@ -46,11 +46,14 @@ void trace_f4_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time)
 
 void evaluate_f4_trace_prod_dpf(const struct Param *param, const struct Keys *keys, uint32_t *polys, uint128_t *shares, uint128_t *cache);
 void convert_f4_trace_prod_to_fft(const struct Param *param, uint32_t *polys);
-void multiply_and_sum_f4_trace_prod(const struct Param *param, uint32_t *fft_a_tensor, uint32_t *polys, uint8_t **rlt);
+void multiply_and_sum_f4_trace_prod(const struct Param *param, uint32_t *fft_a_tensor, uint32_t *polys, uint8_t **rlt, const uint8_t *f4_zeta_powers);
 
-static void compute_f4_trace(uint8_t *rlt, const struct Param *param);
+static void compute_f4_trace(uint8_t *rlt, const struct Param *param, const uint8_t *f4_tr_tbl);
 
-static void copy_f4_block(uint32_t *poly_block, const size_t dpf_block_size, uint128_t *shares, const size_t packed_dpf_block_size, size_t loc);
+static void copy_f4_block(const struct Param *param, uint32_t *poly_block, const size_t dpf_block_size, uint128_t *shares, const size_t packed_dpf_block_size, size_t j);
+
+static void compute_f4_zeta_powers(uint8_t *f4_zeta_powers, const size_t base);
+static void compute_f4_tr_tbl(uint8_t *f4_tr_tbl, const size_t m, uint8_t *f4_zeta_powers);
 
 static uint8_t mult_f4_single(uint8_t a, uint8_t b);
 

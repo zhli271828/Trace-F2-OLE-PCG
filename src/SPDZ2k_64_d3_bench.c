@@ -783,7 +783,6 @@ void copy_gr128_d3_block(struct GR128_D3 *poly_block0, struct GR128_D3 *poly_blo
 void sample_SPDZ2k_64_d3_a_and_tensor(const struct Param *param, struct FFT_GR128_D3_Trace_A *fft_gr128_d3_trace_a) {
     // call sample_gr128_trace_a_and_tensor to compute the relation first and then mod the special modulus
 
-    struct FFT_GR128_D3_Trace_A;
     uint128_t modulus64 = param->modulus64;
     struct GR128_D3 **fft_a = fft_gr128_d3_trace_a->fft_a;
     struct GR128_D3 **fft_a_tensor = fft_gr128_d3_trace_a->fft_a_tensor;

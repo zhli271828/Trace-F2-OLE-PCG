@@ -138,4 +138,12 @@ void fft_recursive_gr128(
     const size_t num_coeffs
     );
 
+void fft_recursive_f8_uint32(
+    uint32_t *coeffs,
+    const uint8_t *zeta_powers,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const struct Param *param,
+    const size_t base
+    );
 #endif

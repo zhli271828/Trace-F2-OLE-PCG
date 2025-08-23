@@ -18,6 +18,8 @@
 #include "SPDZ2k_64_d3_bench.h"
 #include "SPDZ2k_64_d4_bench.h"
 #include "SPDZ2k_64_bench.h"
+#include "trace_f4_bench.h"
+#include "trace_f8_bench.h"
 #include "common.h"
 
 void printUsage() {
@@ -82,6 +84,29 @@ void run_hd_pcg_benchmarks(size_t base, size_t n, size_t c, size_t t, int num_tr
     printf("N=%zu^%zu, c=%zu, t=%zu: Avg PP time %0.4f ms, expand time %0.4f ms, total time %0.4f ms\n", base, n, c, t, pp_time / num_trials, expand_time / num_trials, total_time / num_trials);
     printf("******************************************\n\n");
 }
+
+void pcg_bm_f4_trace_with_param(int num_trials, bench_func bf) {
+    printf("******************************************\n");
+    size_t c = 3;
+    size_t t = 27;
+    size_t n = 15;
+
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+    run_pcg_benchmarks(n, c, t, num_trials, bf);
+    printf("******************************************\n");
+}
+
+void pcg_bm_f8_trace_with_param(int num_trials, bench_func bf) {
+    printf("******************************************\n");
+    size_t c = 3;
+    size_t t = 49;
+    size_t n = 8;
+
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+    run_pcg_benchmarks(n, c, t, num_trials, bf);
+    printf("******************************************\n");
+}
+
 
 void pcg_bm_with_param(int num_trials, bench_func bf) {
 
@@ -203,8 +228,11 @@ int main(int argc, char **argv)
             pcg_bm_with_param(num_trials, modular_bench_pcg);
         } else if (strcmp(argv[i], "--trace_bench")==0) {
             pcg_bm_with_param(num_trials, trace_bench_pcg);
-        }
-        else if (strcmp(argv[i], "--gr64_bench") == 0) {
+        } else if (strcmp(argv[i], "--trace_f4_bench") == 0) {
+            pcg_bm_f4_trace_with_param(num_trials, trace_f4_bench_pcg);
+        } else if (strcmp(argv[i], "--trace_f8_bench") == 0) {
+            pcg_bm_f8_trace_with_param(num_trials, trace_f8_bench_pcg);
+        } else if (strcmp(argv[i], "--gr64_bench") == 0) {
             pcg_bm_with_param(num_trials, gr64_bench_pcg);
         }
         else if (strcmp(argv[i], "--gr128_bench") == 0) {

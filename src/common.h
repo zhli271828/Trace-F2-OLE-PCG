@@ -25,12 +25,20 @@ struct Param {
     size_t c;
     size_t t;
     size_t poly_size;
+    
     size_t block_size;
+    size_t block_bits;
+
     size_t dpf_block_size;
     size_t dpf_domain_bits;
-    size_t block_bits;
+    
     size_t packed_poly_size;
+    
     size_t packed_block_size;
+    
+    size_t packed_dpf_block_size;
+    size_t packed_dpf_domain_bits;
+
     uint128_t zeta128;
     uint64_t zeta64;
     size_t m;

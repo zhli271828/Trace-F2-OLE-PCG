@@ -10,6 +10,8 @@
 void init_gr64_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m);
 void init_gr128_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m);
 void init_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t);
+void init_f4_trace_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t);
+void init_f8_trace_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t);
 void init_gr_bench_params(struct Param *param, const size_t n, const size_t c, const size_t t, const size_t m);
 void init_SPDZ2k_32_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s);
 void init_SPDZ2k_64_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t, const size_t m, const size_t k, const size_t s);
