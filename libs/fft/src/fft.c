@@ -456,11 +456,52 @@ void fft_recursive_f8_uint32(
         }
         // copy temp to the value back
         for (size_t i = 0; i < base; ++i) {
-            memcpy(&coeffs_pos[i][j], &t_coeffs[i], sizeof(uint32_t));
+            coeffs_pos[i][j] = t_coeffs[i];
         }
     }
 }
 
+void fft_recursive_mal128_f4_trace(
+    uint128_t *coeffs,
+    const uint8_t *zeta_powers,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const struct Param *param,
+    const size_t base
+    ) {
+    if (num_vars > 1) {
+        for (size_t i = 0; i < base; ++i) {
+            // apply FFT on each branch
+            fft_recursive_mal128_f4_trace(&coeffs[i*num_coeffs], zeta_powers, num_vars-1, num_coeffs/base, param, base);
+        }
+    }
+    // temp variables to store intermediate values
+    uint128_t mult;
+    uint128_t *coeffs_pos[base];
+    for (size_t i = 0; i < base; ++i) {
+        coeffs_pos[i] = &coeffs[i*num_coeffs];
+    }
+
+    for (size_t j = 0; j < num_coeffs; j++) {
+        uint128_t t_coeffs[base];
+        memset(t_coeffs, 0, base*sizeof(uint128_t));
+        // compute the first base-1 evaluations and store to t_coeffs
+        // coeffs_pos[0...base-1][j] is the coefficients
+        for (size_t k = 0; k < base; ++k) {
+            for (size_t i = 0; i < base; ++i) {
+                /**
+                 * TODO: zeta_powers should be GF(2^128) elements.
+                 */
+                mult = mult_mal128_f4(coeffs_pos[i][j], zeta_powers[k*i%base]);
+                t_coeffs[k] ^= mult;
+            }
+        }
+        // copy temp to the value back
+        for (size_t i = 0; i < base; ++i) {
+            coeffs_pos[i][j] = t_coeffs[i];
+        }
+    }
+}
 
 void fft_recursive_SPDZ2k_32_D3(
     struct GR64_D3 *coeffs,
