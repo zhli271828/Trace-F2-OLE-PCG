@@ -16,7 +16,7 @@ struct FFT_F8_Trace_A {
 };
 
 struct F8_Trace_Prod {
-    struct Keys *keys;
+    struct KeysHD *keys;
     size_t m;
 
     // The output for Tr(zeta^j*z) with dimension m*poly_size
@@ -39,12 +39,12 @@ void init_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *prod);
 void run_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *f8_trace_prod, uint32_t *fft_a_tensor, const uint8_t *f8_tr_tbl, const uint8_t *f8_zeta_powers);
 void free_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *f8_trace_prod);
 
-void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys);
-static void free_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys);
+void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct KeysHD *keys);
+static void free_f8_trace_prod_dpf_keys(const struct Param *param, struct KeysHD *keys);
 
 void trace_f8_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pcg_time);
 
-void evaluate_f8_trace_prod_dpf(const struct Param *param, const struct Keys *keys, uint32_t *polys, uint128_t *shares, uint128_t *cache);
+void evaluate_f8_trace_prod_dpf(const struct Param *param, const struct KeysHD *keys, uint32_t *polys, uint128_t *shares, uint128_t *cache);
 void convert_f8_trace_prod_to_fft(const struct Param *param, const uint8_t *f8_zeta_powers, uint32_t *polys);
 void multiply_and_sum_f8_trace_prod(const struct Param *param, uint32_t *fft_a_tensor, uint32_t *polys, uint8_t **rlt, const uint8_t *f8_zeta_powers);
 

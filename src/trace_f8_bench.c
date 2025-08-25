@@ -198,7 +198,7 @@ void init_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *f8_trac
         printf("t*t*dpf_block_size != poly_size\n");
         exit(-1);
     }
-    struct Keys *keys = xcalloc(1, sizeof(struct Keys));
+    struct KeysHD *keys = xcalloc(1, sizeof(struct KeysHD));
     sample_f8_trace_prod_dpf_keys(param, keys);
     f8_trace_prod->keys = keys;
 
@@ -218,20 +218,21 @@ void init_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *f8_trac
 }
 
 // sample c*c*m*t*t DPF keys
-void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys) {
+void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct KeysHD *keys) {
     size_t c = param->c;
     size_t t = param->t;
     size_t dpf_block_size = param->dpf_block_size;
     size_t dpf_domain_bits = param->dpf_domain_bits;
     const size_t m = param->m;
+    const size_t base = param->base;
 
     size_t packed_dpf_block_size = param->packed_dpf_block_size;
     size_t packed_dpf_domain_bits = param->packed_dpf_domain_bits;
 
-    struct DPFKey **dpf_keys_A = xmalloc(c*c*m*t*t*sizeof(void *));
-    struct DPFKey **dpf_keys_B = xmalloc(c*c*m*t*t*sizeof(void *));
-    struct PRFKeys *prf_keys = xmalloc(sizeof(struct PRFKeys));
-    PRFKeyGen(prf_keys);
+    struct DPFKeyZ **dpf_keys_A = xmalloc(c*c*m*t*t*sizeof(void *));
+    struct DPFKeyZ **dpf_keys_B = xmalloc(c*c*m*t*t*sizeof(void *));
+    struct PRFKeysZ *prf_keys = xmalloc(sizeof(struct PRFKeysZ));
+    PRFKeyGenZ(prf_keys, base);
     for (size_t k=0; k < m; ++k) {
         for (size_t i = 0; i < c; ++i) {
             for (size_t j = 0; j < c; ++j) {
@@ -243,9 +244,9 @@ void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys)
                         RAND_bytes((unsigned char*)&beta, sizeof(uint128_t));
                         // 7 = base**floor(math.log(128/m, base)) with base=2^m-1
                         beta &= 0b111<<(m*random_index(7));
-                        struct DPFKey *kA = xmalloc(sizeof(struct DPFKey));
-                        struct DPFKey *kB = xmalloc(sizeof(struct DPFKey));
-                        DPFGen(prf_keys, packed_dpf_domain_bits, alpha, &beta, 1, kA, kB);
+                        struct DPFKeyZ *kA = xmalloc(sizeof(struct DPFKeyZ));
+                        struct DPFKeyZ *kB = xmalloc(sizeof(struct DPFKeyZ));
+                        DPFGenZ(base, prf_keys, packed_dpf_domain_bits, alpha, &beta, 1, kA, kB);
                         dpf_keys_A[index] = kA;
                         dpf_keys_B[index] = kB;
                     }
@@ -258,24 +259,25 @@ void sample_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys)
     keys->prf_keys = prf_keys;
 }
 
-static void free_f8_trace_prod_dpf_keys(const struct Param *param, struct Keys *keys) {
+static void free_f8_trace_prod_dpf_keys(const struct Param *param, struct KeysHD *keys) {
 
     const size_t c = param->c;
     const size_t t = param->t;
     const size_t m = param->m;
+    const size_t base = param->base;
     for (size_t i = 0; i < c*c*m*t*t; ++i) {
         free(keys->dpf_keys_A[i]);
         free(keys->dpf_keys_B[i]);
     }
     free(keys->dpf_keys_A);
     free(keys->dpf_keys_B);
-    DestroyPRFKey(keys->prf_keys);
+    DestroyPRFKeyZ(keys->prf_keys, base);
     free(keys);
 }
 
 void run_f8_trace_prod(const struct Param *param, struct F8_Trace_Prod *f8_trace_prod, uint32_t *fft_a_tensor, const uint8_t *f8_tr_tbl, const uint8_t *f8_zeta_powers) {
 
-    struct Keys *keys = f8_trace_prod->keys;
+    struct KeysHD *keys = f8_trace_prod->keys;
     uint32_t *polys = f8_trace_prod->polys;
     uint128_t *shares = f8_trace_prod->shares;
     uint128_t *cache = f8_trace_prod->cache;
@@ -342,11 +344,12 @@ static void compute_f8_trace(uint8_t *rlt, const struct Param *param, const uint
 /**
  * TODO: maybe change the parameters to struct F8_Trace_Prod to include most of the inputs
  */
-void evaluate_f8_trace_prod_dpf(const struct Param *param, const struct Keys *keys, uint32_t *polys, uint128_t *shares, uint128_t *cache) {
+void evaluate_f8_trace_prod_dpf(const struct Param *param, const struct KeysHD *keys, uint32_t *polys, uint128_t *shares, uint128_t *cache) {
 
     const size_t c = param->c;
     const size_t t = param->t;
     const size_t m = param->m;
+    const size_t base = param->base;
     const size_t dpf_block_size = param->dpf_block_size;
     for (size_t k=0; k < m; ++k) {
         for (size_t i = 0; i < c; ++i) {
@@ -355,10 +358,10 @@ void evaluate_f8_trace_prod_dpf(const struct Param *param, const struct Keys *ke
                     for (size_t w = 0; w < t; ++w) {
                         // key_index is correct
                         size_t key_index = (((k*c+i)*c+j)*t+l)*t+w;
-                        struct DPFKey *dpf_key = keys->dpf_keys_A[key_index];
+                        struct DPFKeyZ *dpf_key = keys->dpf_keys_A[key_index];
                         size_t poly_index = (k*t+l)*t+w;
                         uint32_t *poly_block = &polys[poly_index*dpf_block_size];
-                        DPFFullDomainEval(dpf_key, cache, shares);
+                        DPFFullDomainEvalZ(base, dpf_key, cache, shares);
                         copy_f8_block(param, poly_block, dpf_block_size, shares, param->packed_dpf_block_size, i, j);
                     }
                 }

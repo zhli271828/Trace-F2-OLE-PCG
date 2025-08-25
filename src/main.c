@@ -98,11 +98,17 @@ void pcg_bm_f4_trace_with_param(int num_trials, bench_func bf) {
 }
 void pcg_bm_mal128_f4_trace_with_param(int num_trials, bench_func bf) {
     printf("******************************************\n");
-    size_t c = 3;
+    size_t c = 5;
     size_t t = 27;
+    // size_t c = 9;
+    // size_t t = 9;
     size_t n = 15;
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu, n=%zu)\n", c, t, n);
+    run_pcg_benchmarks(n, c, t, num_trials, bf);
+    printf("******************************************\n");
 
-    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+    n = 16;
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu, n=%zu)\n", c, t, n);
     run_pcg_benchmarks(n, c, t, num_trials, bf);
     printf("******************************************\n");
 }
@@ -111,8 +117,17 @@ void pcg_bm_f8_trace_with_param(int num_trials, bench_func bf) {
     printf("******************************************\n");
     size_t c = 3;
     size_t t = 49;
-    size_t n = 8;
+    size_t n = 7;
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+    run_pcg_benchmarks(n, c, t, num_trials, bf);
+    printf("******************************************\n");
 
+    n = 8;
+    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
+    run_pcg_benchmarks(n, c, t, num_trials, bf);
+    printf("******************************************\n");
+
+    n = 9;
     printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu)\n", c, t);
     run_pcg_benchmarks(n, c, t, num_trials, bf);
     printf("******************************************\n");
