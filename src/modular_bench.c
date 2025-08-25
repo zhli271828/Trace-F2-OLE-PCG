@@ -223,6 +223,55 @@ void init_f8_trace_bench_params(struct Param* param, const size_t n, const size_
     printf("Done with initializing parameters.\n");
 }
 
+void init_f16_trace_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t) {
+    param->n=n;
+    param->c=c;
+    param->t=t;
+    size_t m = 4;
+    param->m=m;
+    size_t base = (1<<m)-1;
+    param->base = base;
+    size_t poly_size = ipow(base, n);
+    printf("poly_size = %zu\n", poly_size);
+    
+    size_t block_size = ceil(poly_size/ t);
+    if (block_size * t != poly_size) {
+        printf("block_size * t != poly_size\n");
+        exit(-1);
+    }
+    printf("block_size = %zu\n", block_size);
+    // size_t block_bits = (size_t)(log_base(poly_size/t, base));
+    size_t block_bits = find_index(poly_size/t, base);
+    printf("block_bits = %zu\n", block_bits);
+
+    // size_t dpf_domain_bits = (size_t)(log_base(poly_size/t/t, base));
+    size_t dpf_domain_bits = find_index(poly_size/t/t, base);
+    printf("dpf_domain_bits = %zu\n", dpf_domain_bits);
+    size_t dpf_block_size = ipow(base, dpf_domain_bits);
+    printf("dpf_block_size = %zu\n", dpf_block_size);
+    if (dpf_block_size*t*t != poly_size) {
+        printf("dpf_block_size*t*t != poly_size\n");
+        exit(-1);
+    }
+
+    size_t packed_dpf_domain_bits = ceil(log_base(poly_size/(t*t*floor(128/m)), base));
+    printf("packed_dpf_domain_bits = %zu\n", packed_dpf_domain_bits);
+    size_t packed_dpf_block_size = ipow(base, packed_dpf_domain_bits);
+    printf("packed_dpf_block_size = %zu\n", packed_dpf_block_size);
+
+    param->packed_dpf_block_size = packed_dpf_block_size;
+    param->packed_dpf_domain_bits = packed_dpf_domain_bits;
+    
+    param->poly_size = poly_size;
+    param->block_size = block_size;
+    param->block_bits = block_bits;
+    param->dpf_block_size = dpf_block_size;
+    param->dpf_domain_bits = dpf_domain_bits;
+    
+    printf("Done with initializing parameters.\n");
+}
+
+
 void init_bench_params(struct Param* param, const size_t n, const size_t c, const size_t t) {
     param->n=n;
     param->c=c;

@@ -6,6 +6,7 @@
 #include "gr64_bench.h"
 #include "gr128_bench.h"
 #include "mal128_trace_f4_bench.h"
+#include "mal128_trace_f16_bench.h"
 
 typedef __int128 int128_t;
 typedef unsigned __int128 uint128_t;
@@ -157,4 +158,12 @@ void fft_recursive_mal128_f4_trace(
     const size_t base
     );
 
+void fft_recursive_mal128_f16_trace(
+    uint128_t *coeffs,
+    const uint8_t *zeta_powers,
+    const size_t num_vars,
+    const size_t num_coeffs,
+    const struct Param *param,
+    const size_t base
+    );
 #endif

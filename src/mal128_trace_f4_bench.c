@@ -30,8 +30,8 @@ void mal128_trace_f4_bench_pcg(size_t n, size_t c, size_t t, struct PCG_Time *pc
      */
     init_f4_trace_bench_params(param, n, c, t);
     const size_t m = 2;
-    const size_t base = 3;
-    const size_t q = 4;
+    const size_t base = (1<<m)-1;
+    const size_t q = 1<<m;
     uint8_t f4_zeta_powers[base];
     uint8_t f4_tr_tbl[q];
     memset(f4_zeta_powers, 0, sizeof(f4_zeta_powers));
