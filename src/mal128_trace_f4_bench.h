@@ -57,8 +57,7 @@ static void copy_mal128_f4_block(uint128_t *poly_block, uint128_t *shares, const
 static void compute_f4_zeta_powers(uint8_t *f4_zeta_powers, const size_t base);
 static void compute_f4_tr_tbl(uint8_t *f4_tr_tbl, const size_t m, uint8_t *f4_zeta_powers);
 
-static uint8_t mult_f4_single(uint8_t a, uint8_t b);
-uint128_t mult_mal128_f4(const uint128_t a, const uint128_t b);
+uint128_t mult_mal128_f4(uint128_t a, uint128_t b);
 static void scalar_mult_mal128_trace_f4(uint8_t scalar, uint128_t b, uint128_t* t);
 
 #endif

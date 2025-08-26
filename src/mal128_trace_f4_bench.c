@@ -14,6 +14,22 @@
 #include "utils.h"
 #include "f4ops.h"
 
+// GF(4) multiplication table
+static const uint8_t f4_mul_tbl[4][4] = {
+    {0,0,0,0},
+    {0,1,2,3},
+    {0,2,3,1},
+    {0,3,1,2}
+};
+// Add in GF(4) is just XOR
+static inline uint8_t f4_add(uint8_t a, uint8_t b) {
+    return a ^ b;
+}
+// Multiply in GF(4)
+static inline uint8_t f4_mul(uint8_t a, uint8_t b) {
+    return f4_mul_tbl[a][b];
+}
+
 /**
  * For q=4, existing parameter only supports c<=9.
  * The program supports c<=16
@@ -69,7 +85,7 @@ static void compute_f4_zeta_powers(uint8_t *f4_zeta_powers, const size_t base) {
     uint8_t zeta = 1<<1;
     f4_zeta_powers[0] = 1;
     for (size_t i = 1; i<base; ++i) {
-        f4_zeta_powers[i] = mult_f4_single(zeta, f4_zeta_powers[i-1]);
+        f4_zeta_powers[i] = f4_mul(zeta, f4_zeta_powers[i-1]);
     }
 }
 
@@ -121,82 +137,31 @@ void init_fft_mal128_f4_trace_a(const struct Param *param, struct FFT_Mal128_F4_
 }
 
 /**
- * Multiplies two elements of F4 only without packing support.
+ * Multiply two F_{2^128} elements over GF(4).
+ * The minimal polynomial is x^64 + z*x^3 + z*x + 1, where GF(4)=GF(2)(z).
+ * It is converted to F_{2^128} via polynomial (x^64 + z*x^3 + z*x + 1)*x^64 + (z + 1)*x^3 + (z + 1)*x + 1=x^128 + x^67 + x^65 + x^6 + x^3 + x^2 + x + 1
+.
  */
-static uint8_t mult_f4_single(uint8_t a, uint8_t b) {
-
-    uint8_t tmp = ((a & 0b10) & (b & 0b10));
-    uint8_t res = tmp ^ ((a & 0b10) & ((b & 0b01) << 1) ^ (((a & 0b01) << 1) & (b & 0b10)));
-    res |= ((a & 0b01) & (b & 0b01)) ^ (tmp >> 1);
-    return res;
-}
-
-// F4 element encoding: 00=0, 01=1, 10=β, 11=β+1 (2 bits each)
-typedef uint8_t f4_t;
-
-// Precomputed F4 multiplication table: f4_mul[a][b] = a * b in F4
-static const f4_t f4_mul[4][4] = {
-    {0x00, 0x00, 0x00, 0x00}, // 0 * any
-    {0x00, 0x01, 0x10, 0x11}, // 1 * any
-    {0x00, 0x10, 0x11, 0x01}, // β * any (β²=β+1, β*(β+1)=1)
-    {0x00, 0x11, 0x01, 0x10}  // (β+1) * any ((β+1)²=β)
-};
-
-// F4 addition (XOR of 2-bit values)
-static inline f4_t f4_add(f4_t a, f4_t b) {
-    return (a ^ b) & 0x03; // Keep result within 2 bits
-}
-
-// Extract the i-th 2-bit F4 coefficient from a packed uint128_t
-static inline f4_t get_coeff(const uint128_t val, int i) {
-    return (val >> (2 * i)) & 0x03;
-}
-/**
- * Assume F4 = {0,1,β,β+1}. The minimal polynomial is m(x)=x^64+βx^3+βx+1.
- */
-uint128_t mult_mal128_f4(const uint128_t a, const uint128_t b) {
-    f4_t product[127] = {0}; // Stores product coefficients (degrees 0-126)
-
-    // Step 1: Polynomial multiplication over F4
-    for (int i = 0; i < 64; i++) {
-        f4_t a_coeff = get_coeff(a, i);
-        if (a_coeff == 0) continue;
-
-        for (int j = 0; j < 64; j++) {
-            f4_t b_coeff = get_coeff(b, j);
-            if (b_coeff == 0) continue;
-
-            // Multiply coefficients in F4 and add to product
-            int deg = i + j;
-            product[deg] = f4_add(product[deg], f4_mul[a_coeff][b_coeff]);
-        }
-    }
-
-    // Step 2: Reduce modulo m(x) = x^64 + βx³ + βx + 1
-    // β is 0x10 (10 in binary), β+1 is 0x11 (11 in binary)
-    const f4_t beta = 0x10;
-
-    for (int k = 126; k >= 64; k--) {
-        f4_t c = product[k];
-        if (c == 0) continue;
-
-        product[k] = 0; // Clear high-degree term
-        int d = k - 64; // Reduced degree
-
-        // x^k ≡ x^d * (βx³ + βx + 1) mod m(x)
-        product[d] = f4_add(product[d], c);                  // +c*1
-        product[d + 1] = f4_add(product[d + 1], f4_mul[c][beta]); // +c*β
-        if (d + 3 < 127) {
-            product[d + 3] = f4_add(product[d + 3], f4_mul[c][beta]); // +c*βx³
-        }
-    }
-
-    // Step 3: Pack result back into uint128_t (degrees 0-63)
+uint128_t mult_mal128_f4(uint128_t a, uint128_t b) {
+    const uint128_t GF_POLY = 0xA000000000000004F;
     uint128_t result = 0;
-    for (int i = 0; i < 64; i++) {
-        result |= (uint128_t)(product[i] & 0x03) << (2 * i);
-    }
+    uint128_t carry;
 
+    // Perform polynomial multiplication
+    for (int i = 0; i < 128; i++) {
+        if (b & 1) { // If the least significant bit of b is 1
+            result ^= a;
+        }
+        // Check if the highest bit of `a` is 1 for reduction
+        carry = a & ((uint128_t)1 << 127);
+        a <<= 1;
+
+        // If carry exists, reduce with the irreducible polynomial
+        if (carry) {
+            a ^= (uint128_t)GF_POLY;
+        }
+        b >>= 1;
+    }
     return result;
 }
 
@@ -220,7 +185,7 @@ void sample_mal128_f4_trace_a_and_tensor(const struct Param *param, struct FFT_M
     for (size_t i = 0; i < c; i++) {
         for (size_t ii = 0; ii < poly_size; ii++) {
             uint8_t ai = (fft_a[ii] >> (m * i)) & 0b11;
-            uint32_t w = mult_f4_single(ai, ai);
+            uint32_t w = f4_mul(ai, ai);
             fft_a_square[ii] |= w<<(m*i);
         }
     }
@@ -240,13 +205,13 @@ void sample_mal128_f4_trace_a_and_tensor(const struct Param *param, struct FFT_M
                         uint8_t aj_square = (fft_a_square[ii] >> (m * j)) & 0b11;
                         uint32_t w = 0;
                         if (k == 0 && l == 0) {
-                            w = mult_f4_single(ai, aj);
+                            w = f4_mul(ai, aj);
                         } else if (k == 0 && l == 1) {
-                            w = mult_f4_single(ai, aj_square);
+                            w = f4_mul(ai, aj_square);
                         } else if (k == 1 && l == 0) {
-                            w = mult_f4_single(ai_square, aj);
+                            w = f4_mul(ai_square, aj);
                         } else if (k == 1 && l == 1) {
-                            w = mult_f4_single(ai_square, aj_square);
+                            w = f4_mul(ai_square, aj_square);
                         } else {
                             printf("Missing items\n");
                         }
@@ -389,7 +354,7 @@ void multiply_and_sum_mal128_f4_trace_prod(const struct Param *param, uint32_t *
 static void scalar_mult_mal128_trace_f4(uint8_t scalar, uint128_t b, uint128_t* t) {
 
     for (size_t i = 0; i < 128/2; ++i) {
-        uint128_t w = mult_f4_single(scalar, (b>>(2*i)) & 0b11);
+        uint128_t w = f4_mul(scalar, (b>>(2*i)) & 0b11);
         *t |= (w<<(2*i));
     }
 }
@@ -398,7 +363,7 @@ void convert_mal128_f4_trace_prod_to_fft(const struct Param *param, uint128_t *p
     const size_t c = param->c;
     const size_t m = param->m;
     const size_t n = param->n;
-    const size_t base = param-> base;
+    const size_t base = param->base;
     const size_t poly_size = param->poly_size;
     // m*c
     for(size_t i = 0; i < c*m; ++i) {

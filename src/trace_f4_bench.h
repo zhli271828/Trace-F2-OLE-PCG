@@ -55,6 +55,4 @@ static void copy_f4_block(const struct Param *param, uint32_t *poly_block, const
 static void compute_f4_zeta_powers(uint8_t *f4_zeta_powers, const size_t base);
 static void compute_f4_tr_tbl(uint8_t *f4_tr_tbl, const size_t m, uint8_t *f4_zeta_powers);
 
-static uint8_t mult_f4_single(uint8_t a, uint8_t b);
-
 #endif

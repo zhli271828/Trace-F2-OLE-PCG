@@ -14,6 +14,26 @@
 #include "utils.h"
 #include "f4ops.h"
 
+// GF(4) multiplication table
+static const uint8_t f4_mul_tbl[4][4] = {
+    {0,0,0,0},
+    {0,1,2,3},
+    {0,2,3,1},
+    {0,3,1,2}
+};
+// Add in GF(4) is just XOR
+static inline uint8_t f4_add(uint8_t a, uint8_t b) {
+    return a ^ b;
+}
+// Multiply in GF(4)
+static inline uint8_t f4_mul(uint8_t a, uint8_t b) {
+    if (a>=4 || b>=4) {
+        printf("out of range");
+    }
+    return f4_mul_tbl[a][b];
+
+}
+
 /**
  * For q=4, existing parameter only supports c<=9.
  * The program supports c<=16
@@ -65,7 +85,7 @@ static void compute_f4_zeta_powers(uint8_t *f4_zeta_powers, const size_t base) {
     uint8_t zeta = 1<<1;
     f4_zeta_powers[0] = 1;
     for (size_t i = 1; i<base; ++i) {
-        f4_zeta_powers[i] = mult_f4_single(zeta, f4_zeta_powers[i-1]);
+        f4_zeta_powers[i] = f4_mul(zeta, f4_zeta_powers[i-1]);
     }
 }
 
@@ -112,16 +132,6 @@ void init_fft_f4_trace_a(const struct Param *param, struct FFT_F4_Trace_A *fft_f
     fft_f4_trace_a->fft_a_tensor = fft_a_tensor;
 }
 
-/**
- * Multiplies two elements of F4 only without packing support.
- */
-static uint8_t mult_f4_single(uint8_t a, uint8_t b) {
-
-    uint8_t tmp = ((a & 0b10) & (b & 0b10));
-    uint8_t res = tmp ^ ((a & 0b10) & ((b & 0b01) << 1) ^ (((a & 0b01) << 1) & (b & 0b10)));
-    res |= ((a & 0b01) & (b & 0b01)) ^ (tmp >> 1);
-    return res;
-}
 
 void sample_f4_trace_a_and_tensor(const struct Param *param, struct FFT_F4_Trace_A * fft_f4_trace_a) {
     uint32_t *fft_a = fft_f4_trace_a->fft_a;
@@ -144,10 +154,10 @@ void sample_f4_trace_a_and_tensor(const struct Param *param, struct FFT_F4_Trace
                 for (size_t ii = 0; ii < poly_size; ++ii) {
                     uint8_t ai = (fft_a[ii] >> (m * i)) & 0b11;
                     uint8_t aj = (fft_a[ii] >> (m * j)) & 0b11;
-                    uint32_t w = mult_f4_single(ai, aj);
+                    uint32_t w = f4_mul(ai, aj);
                     if (l==1) {
                         // This only works for m=2.
-                        w = mult_f4_single(w, aj);
+                        w = f4_mul(w, aj);
                     }
                     fft_a_tensor[(l*c+i)*poly_size+ii] |= w<<(m*j);
                 }
@@ -271,12 +281,11 @@ void multiply_and_sum_f4_trace_prod(const struct Param *param, uint32_t *fft_a_t
                 for (size_t w = 0; w < poly_size; w++) {
                     uint8_t a_lijw = fft_a_tensor[(l*c+i)*poly_size+w]>>(m*j) & 0b11;
                     uint8_t e_lijw = polys[(l*c+i)*poly_size+w]>>(m*j) & 0b11;
-
-                    uint8_t prod = mult_f4_single(a_lijw, e_lijw);
+                    uint8_t prod = f4_mul(a_lijw, e_lijw);
                     rlt[0][w] ^= prod;
 
                     if (l == 0) { // zeta^{1+2^l}=zeta^2=zeta+1
-                        prod = mult_f4_single(prod, 0b11);
+                        prod = f4_mul(prod, 0b11);
                     }
                     if (l == 1) { // zeta^{1+2^l}=zeta^3=1
                     } else {

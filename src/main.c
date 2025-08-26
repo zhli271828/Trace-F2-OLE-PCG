@@ -113,15 +113,11 @@ void pcg_bm_mal128_f4_trace_with_param(int num_trials, bench_func bf) {
     size_t t = 27;
     // size_t c = 9;
     // size_t t = 9;
-    size_t n = 15;
-    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu, n=%zu)\n", c, t, n);
-    run_pcg_benchmarks(n, c, t, num_trials, bf);
-    printf("******************************************\n");
-
-    n = 16;
-    printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu, n=%zu)\n", c, t, n);
-    run_pcg_benchmarks(n, c, t, num_trials, bf);
-    printf("******************************************\n");
+    for (size_t n = 12; n <= 16; ++n) {
+        printf("Benchmarking PCG with aggressive parameters (c=%zu, t=%zu, n=%zu)\n", c, t, n);
+        run_pcg_benchmarks(n, c, t, num_trials, bf);
+        printf("******************************************\n");
+    }
 }
 
 void pcg_bm_mal128_f16_trace_with_param(int num_trials, bench_func bf) {
